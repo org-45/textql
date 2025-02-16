@@ -1,0 +1,36 @@
+# Python-specific ignores
+__pycache__/
+*.pyc
+*.pyo
+*.egg
+.pytest_cache
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/  # Some IDEs create a .venv folder instead
+
+# OS-generated files
+.DS_Store  # macOS
+Thumbs.db  # Windows
+
+# IDE-specific files
+.idea/       # IntelliJ IDEA
+.vscode/     # VS Code
+*.swp       # Vim swap files
+*~         # Backup files created by some editors
+
+# Database files (if they contain sensitive data or are large)
+*.db  # exclude all db files (or specify a more targeted pattern if needed, but be careful)
+#mydatabase.db # specific db to exclude
+
+# Secret keys, API keys, and other sensitive information
+.env         # Environment variables file (DO NOT COMMIT API KEYS!)
+secrets.txt # any file with potentially secret data
+
+#Log files or debugging outputs
+*.log
+
+# Other
+tmp/ # temporary files and folder

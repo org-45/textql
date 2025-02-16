@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FastAPI and HTMX</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+    <h1>FastAPI and HTMX</h1>
+    <button hx-post="/hello" hx-target="#output" hx-swap="innerHTML">
+        Say Hello
+    </button>
+    <div id="output"></div>
+</body>
+</html>
