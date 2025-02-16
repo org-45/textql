@@ -23,6 +23,11 @@ def is_valid_input(user_input):
     pattern = re.compile(r"^[a-zA-Z0-9\s.,?!-]+$")  # Allow letters, numbers, spaces, and some punctuation
     return bool(pattern.match(user_input))
 
+def render_notification(request: Request, message: str, type: str = "error"):
+    return templates.TemplateResponse(
+        "notification.html", {"request": request, "message": message, "type": type}
+    )
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -33,8 +38,9 @@ async def hello_world(request: Request):
 
 @app.post("/generate", response_class=HTMLResponse)
 async def generate_data_endpoint(request: Request, user_input: str = Form(...)):
+
     if not is_valid_input(user_input):
-        return HTMLResponse(content="Invalid input. Please use only alphanumeric characters, spaces, and basic punctuation.", status_code=400)
+        return render_notification(request, "Invalid input. Please use only alphanumeric characters, spaces, and basic punctuation.","error")
 
     result = generate_data(user_input)
 
