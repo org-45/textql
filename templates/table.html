@@ -1,3 +1,4 @@
+<h2>Data Table</h2>
 <table>
     <thead>
         <tr>
@@ -9,13 +10,13 @@
     <tbody>
         {% for item in data %}
         <tr>
-            <td>{{ item.id }}</td>
-            <td>{{ item.name }}</td>
-            <td>{{ item.value }}</td>
+            <td>{{ item.id | escape }}</td>
+            <td>{{ item.name | escape }}</td>
+            <td>{{ item.value | escape }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 <script>
-    document.getElementById('prompt-text').textContent = `{{ prompt }}`;
+    document.getElementById('prompt-text').textContent = `{{ prompt | escape }}`;
 </script>

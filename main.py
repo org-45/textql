@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import re
 
 from src.gemini_api import generate_data
 
@@ -16,7 +17,12 @@ class Item(BaseModel):
     id: int
     name: str
     value: int
-    
+
+def is_valid_input(user_input):
+    # Check for potentially harmful characters/patterns
+    pattern = re.compile(r"^[a-zA-Z0-9\s.,?!-]+$")  # Allow letters, numbers, spaces, and some punctuation
+    return bool(pattern.match(user_input))
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -27,6 +33,9 @@ async def hello_world(request: Request):
 
 @app.post("/generate", response_class=HTMLResponse)
 async def generate_data_endpoint(request: Request, user_input: str = Form(...)):
+    if not is_valid_input(user_input):
+        return HTMLResponse(content="Invalid input. Please use only alphanumeric characters, spaces, and basic punctuation.", status_code=400)
+
     result = generate_data(user_input)
 
     data = result.get("data", [])
