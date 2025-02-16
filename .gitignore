@@ -1,4 +1,3 @@
-# Python-specific ignores
 __pycache__/
 *.pyc
 *.pyo
@@ -7,30 +6,14 @@ __pycache__/
 dist/
 build/
 
-# Virtual environment
+
 venv/
-.venv/  # Some IDEs create a .venv folder instead
+.venv/
 
-# OS-generated files
-.DS_Store  # macOS
-Thumbs.db  # Windows
+.DS_Store
 
-# IDE-specific files
-.idea/       # IntelliJ IDEA
-.vscode/     # VS Code
-*.swp       # Vim swap files
-*~         # Backup files created by some editors
+.vscode/
+*.swp
+*~
+.env
 
-# Database files (if they contain sensitive data or are large)
-*.db  # exclude all db files (or specify a more targeted pattern if needed, but be careful)
-#mydatabase.db # specific db to exclude
-
-# Secret keys, API keys, and other sensitive information
-.env         # Environment variables file (DO NOT COMMIT API KEYS!)
-secrets.txt # any file with potentially secret data
-
-#Log files or debugging outputs
-*.log
-
-# Other
-tmp/ # temporary files and folder

@@ -1,0 +1,134 @@
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #e3f2fd;
+    color: #333;
+    line-height: 1.6;
+  }
+  
+  .container {
+    max-width: 960px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+  
+  h1 {
+    text-align: center;
+    color: #1976d2;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+ 
+  form {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  label {
+    display: inline-block;
+    width: 140px;
+    text-align: right;
+    margin-right: 10px;
+    font-weight: 500;
+    color: #1565c0;
+  }
+  
+  input[type="text"] {
+    padding: 10px 12px;
+    border: 1px solid #90caf9;
+    border-radius: 6px;
+    width: 280px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+  }
+  
+  input[type="text"]:focus {
+    border-color: #1976d2;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(25, 118, 210, 0.2);
+  }
+  
+  button {
+    padding: 12px 24px;
+    background-color: #1565c0;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  button:hover {
+    background-color: #1976d2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  button:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  
+ 
+  #prompt-outbox {
+    background-color: #bbdefb;
+    padding: 15px;
+    margin: 20px auto;
+    width: 80%;
+    border: 1px solid #64b5f6;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+  
+  #prompt-outbox strong {
+    font-weight: 600;
+    color: #0d47a1;
+  }
+  
+  #prompt-text {
+    font-family: 'Consolas', monospace;
+    font-size: 15px;
+    color: #212121;
+    margin-top: 8px;
+  }
+  
+ 
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px auto;
+    background-color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  th,
+  td {
+    border: 1px solid #90caf9;
+    padding: 14px 16px;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #90caf9;
+    color: #0d47a1;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  tbody tr:nth-child(even) {
+    background-color: #e3f2fd;
+  }
