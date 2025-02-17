@@ -1,0 +1,90 @@
+[
+  {
+    "sql": "SELECT * FROM flights LIMIT 5;",
+    "description": "Show the first 5 rows of all flight data."
+  },
+  {
+    "sql": "SELECT AIRLINE, FLIGHT_NUMBER, ORIGIN_AIRPORT, DESTINATION_AIRPORT FROM flights LIMIT 5;",
+    "description": "List airline, flight number, origin, and destination for the first 5 flights."
+  },
+  {
+    "sql": "SELECT * FROM airports WHERE COUNTRY = 'USA' LIMIT 5;",
+    "description": "List the first 5 airports located in the USA."
+  },
+  {
+    "sql": "SELECT * FROM airports WHERE CITY LIKE 'New%' LIMIT 5;",
+    "description": "Find the first 5 airports in cities starting with 'New'."
+  },
+  {
+    "sql": "SELECT * FROM flights ORDER BY DEPARTURE_DELAY DESC LIMIT 5;",
+    "description": "Show the 5 flights with the largest departure delays."
+  },
+  {
+    "sql": "SELECT AIRLINE, COUNT(*) AS TotalFlights FROM flights GROUP BY AIRLINE LIMIT 5;",
+    "description": "Count the number of flights for each airline (first 5)."
+  },
+  {
+    "sql": "SELECT * FROM flights WHERE ORIGIN_AIRPORT = 'JFK' ORDER BY DEPARTURE_DELAY DESC LIMIT 5;",
+    "description": "List the 5 most delayed flights originating from JFK airport."
+  },
+  {
+    "sql": "SELECT f.FLIGHT_NUMBER, a.AIRLINE FROM flights AS f JOIN airlines AS a ON f.AIRLINE = a.IATA_CODE LIMIT 5;",
+    "description": "List flight numbers with their airline name (first 5)."
+  },
+  {
+    "sql": "SELECT * FROM flights WHERE DISTANCE > (SELECT AVG(DISTANCE) FROM flights) LIMIT 5;",
+    "description": "Show the 5 flights with distance greater than average distance."
+  },
+  {
+    "sql": "SELECT * FROM flights WHERE ORIGIN_AIRPORT = 'LAX' AND DESTINATION_AIRPORT = 'JFK' AND DEPARTURE_DELAY > 10 LIMIT 5;",
+    "description": "List the 5 flights from LAX to JFK with a departure delay greater than 10 minutes."
+  },
+  {
+    "sql": "SELECT YEAR, MONTH, DAY, AIRLINE, FLIGHT_NUMBER FROM flights LIMIT 5;",
+    "description": "Show basic details (date, airline, flight number) for the first 5 flights."
+  },
+  {
+    "sql": "SELECT AIRLINE, COUNT(*) AS TotalFlights FROM flights GROUP BY AIRLINE ORDER BY TotalFlights DESC LIMIT 5;",
+    "description": "List the top 5 airlines with the most flights, ordered by flight count."
+  },
+  {
+    "sql": "SELECT * FROM airports WHERE COUNTRY = 'USA' AND STATE = 'CA' LIMIT 5;",
+    "description": "List the first 5 airports located in California (USA)."
+  },
+  {
+    "sql": "SELECT * FROM airports WHERE CITY LIKE '%Beach%' OR CITY LIKE '%City%' LIMIT 5;",
+    "description": "Find the first 5 airports in cities containing 'Beach' or 'City' in their name."
+  },
+  {
+    "sql": "SELECT AIRLINE, AVG(DEPARTURE_DELAY) AS AvgDelay FROM flights GROUP BY AIRLINE ORDER BY AvgDelay DESC LIMIT 5;",
+    "description": "Show the 5 airlines with the highest average departure delay."
+  },
+  {
+    "sql": "SELECT YEAR,MONTH, DAY, COUNT(*) AS FlightsPerDay FROM flights GROUP BY YEAR, MONTH, DAY ORDER BY FlightsPerDay DESC LIMIT 5;",
+    "description": "List the 5 days with the most flights, ordered by flight count."
+  },
+  {
+    "sql": "SELECT ORIGIN_AIRPORT, AVG(DEPARTURE_DELAY) AS AvgDelay FROM flights WHERE YEAR = 2015 GROUP BY ORIGIN_AIRPORT ORDER BY AvgDelay DESC LIMIT 5;",
+    "description": "List the 5 airports with the highest average departure delay in 2015."
+  },
+  {
+    "sql": "SELECT f.AIRLINE, COUNT(*) AS TotalFlights FROM flights AS f WHERE f.ORIGIN_AIRPORT IN (SELECT IATA_CODE FROM airports WHERE COUNTRY = 'USA') GROUP BY f.AIRLINE ORDER BY TotalFlights DESC LIMIT 5;",
+    "description": "List the 5 airlines with the most flights originating from US airports."
+  },
+  {
+    "sql": "SELECT * FROM flights WHERE DISTANCE > (SELECT MAX(DISTANCE) FROM flights) * 0.9 LIMIT 5;",
+    "description": "Show the 5 flights with distance greater than 90% of the maximum flight distance."
+  },
+  {
+    "sql": "SELECT * FROM flights WHERE ORIGIN_AIRPORT = 'LAX' AND DESTINATION_AIRPORT IN (SELECT IATA_CODE FROM airports WHERE STATE = 'NY') AND DEPARTURE_DELAY > 15 LIMIT 5;",
+    "description": "List the 5 flights from LAX to New York state airports with departure delay > 15 mins."
+  },
+  {
+    "sql": "SELECT TAIL_NUMBER, count(*) FROM flights GROUP BY TAIL_NUMBER ORDER BY count(*) DESC LIMIT 5;",
+    "description": "What planes fly the most"
+  },
+  {
+    "sql": "SELECT avg(ARRIVAL_DELAY), avg(DEPARTURE_DELAY), AIRLINE from flights GROUP BY AIRLINE;",
+    "description": "The average departure delay, by airline."
+  }
+]
