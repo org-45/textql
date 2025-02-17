@@ -1,22 +1,32 @@
-<h2>Data Table</h2>
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Value</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in data %}
-        <tr>
-            <td>{{ item.id | escape }}</td>
-            <td>{{ item.name | escape }}</td>
-            <td>{{ item.value | escape }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-<script>
-    document.getElementById('prompt-text').textContent = `{{ prompt | escape }}`;
-</script>
+<h4>Query Results</h4>
+
+<div id="prompt-outbox" aria-live="polite">
+    <pre id="prompt-text">{{ sql_query | escape }}</pre>
+</div>
+
+{% if column_names %}
+    <div class="table-container">
+        <div class="table-scroll-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        {% for column in column_names %}
+                            <th>{{ column | escape }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                        <tr>
+                            {% for item in row %}
+                                <td>{{ item | escape }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% else %}
+    <p>No results found.</p>
+{% endif %}

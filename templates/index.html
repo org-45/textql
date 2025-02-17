@@ -1,26 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Textql</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TextQL - SQL Query Interface">
+    <title>{{ app_name }}</title>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>TEXTQL</h1>
+    <header>
+        <h1>{{ app_name }}</h1>
+    </header>
 
-    <div id="notification-board" class="notification">
-    </div>
+    <main class="container">
+        <div id="notification-board" class="notification" role="alert" aria-live="polite"></div>
 
-    <form hx-post="/generate" hx-target="#output" hx-swap="innerHTML">
-        <input type="text" id="user_input" name="user_input">
-        <button type="submit">Generate</button>
-    </form>
+        <form class="form" hx-post="/generate-sql" hx-target="#output" hx-swap="innerHTML" hx-indicator="#loading">
+            <div class="form-group">
+                <label for="natural_language_input">Enter Natural Language Query:</label>
+                <input type="text" id="natural_language_input" name="natural_language_input" placeholder="Describe your query in natural language" required>
+            </div>
 
-    <div id="prompt-outbox">
-        <strong>Prompt:</strong>
-        <pre id="prompt-text"></pre>
-    </div>
+            <button type="submit" class="btn">
+                Generate SQL
+                <span class="loading-spinner" id="loading"></span>
+            </button>
+        </form>
 
-    <div id="output">
+        <div id="output" role="region" aria-live="polite">
+            <!-- results will be loaded here -->
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; {{ app_name }} {{ now.year }}</p>
+    </footer>
+
+    <script>
+        // add client-side validation and error handling
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('htmx:beforeRequest', function(event) {
+                const select = document.getElementById('user_input');
+                const input = document.getElementById('natural_language_input');
+                if (!select.value && !input.value) {
+                    event.preventDefault();
+                    document.getElementById('notification-board').innerHTML = `
+                        <div class="alert alert-error">
+                            Please select a query or enter a natural language query before proceeding.
+                        </div>
+                    `;
+                }
+            });
+        });
+
+        // update prompt text when query is selected or natural language input is provided
+        document.getElementById('user_input').addEventListener('change', function(event) {
+            document.getElementById('prompt-text').textContent = event.target.value;
+        });
+
+        document.getElementById('natural_language_input').addEventListener('input', function(event) {
+            document.getElementById('prompt-text').textContent = event.target.value;
+        });
+    </script>
 </body>
 </html>
