@@ -6,6 +6,11 @@ from pydantic import BaseModel, constr
 from datetime import datetime
 import logging
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from starlette.responses import PlainTextResponse
+
 from src.database import DatabaseManager
 from src.gemini_api import generate_sql
 
@@ -19,6 +24,16 @@ class QueryResult(BaseModel):
     results: List[List[Any]]
 
 def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
+
+    # initialize the limiter
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+
+    # exception Handler
+    @app.exception_handler(RateLimitExceeded)
+    async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+        return PlainTextResponse(str(exc), status_code=429)
+    
     async def get_db(request: Request) -> DatabaseManager:
         return request.app.state.db
 
@@ -39,6 +54,7 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
             raise HTTPException(status_code=500, detail="Internal server error")
 
     @app.post("/generate-sql", response_class=HTMLResponse)
+    @limiter.limit("1/15seconds")
     async def generate_sql_endpoint(
         request: Request,
         natural_language_input: str = Form(...),
