@@ -10,6 +10,7 @@ DB_NAME = "textql.db"
 DATA_DIR = "data"
 
 
+# creates table in db
 def create_table(conn, table_name, column_defs):
     """Creates a table in the database."""
     columns_str = ", ".join(column_defs)
@@ -17,7 +18,7 @@ def create_table(conn, table_name, column_defs):
     conn.execute(sql)
     conn.commit()
 
-
+# handles csv file to execute import on db
 def import_csv_to_db(conn, table_name, csv_file):
     """Imports data from a CSV file into the database table."""
     cursor = conn.cursor()
@@ -33,7 +34,7 @@ def import_csv_to_db(conn, table_name, csv_file):
         except sqlite3.Error as e:
             print(f"Error importing data into {table_name} from {csv_file}: {e}")
 
-
+# handles creation of index for a given table
 def create_index(conn, table_name, column_name):
     """Creates an index on the specified column."""
     index_name = f"idx_{table_name}_{column_name}"
@@ -45,8 +46,8 @@ def create_index(conn, table_name, column_name):
     except sqlite3.Error as e:
         print(f"Error creating index on table '{table_name}' column '{column_name}': {e}")
 
-
-def initialize_database():
+# call this function to import csv to db
+def initialize_database_import():
     """Initializes the database: creates tables, imports data, and creates indices."""
     conn = sqlite3.connect(DB_NAME)
     try:
@@ -93,5 +94,5 @@ def initialize_database():
 
 
 if __name__ == "__main__":
-    initialize_database()
+    initialize_database_import()
     print("Database initialization complete.")

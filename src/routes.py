@@ -12,7 +12,9 @@ from slowapi.errors import RateLimitExceeded
 from starlette.responses import PlainTextResponse
 
 from src.database import DatabaseManager
-from src.gemini_api import generate_sql
+from src.llm import generate_sql_from_llm
+
+from src.helper.loader import load_queries
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,7 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
                 "index.html",
                 {
                     "request": request,
-                    "queries": await db.load_queries(),
+                    "queries": await load_queries(),
                     "app_name": 'textql',
                     "now": datetime.now()
                 }
@@ -61,7 +63,8 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
         db: DatabaseManager = Depends(get_db)
     ):
         try:
-            sql_query = generate_sql(natural_language_input)["data"].replace('sql', '').strip()
+            response = await generate_sql_from_llm(natural_language_input)
+            sql_query = response["data"].replace('sql', '').strip()
             column_names, results = await db.execute_query(sql_query)
             
             return templates.TemplateResponse(

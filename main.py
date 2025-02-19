@@ -23,13 +23,13 @@ async def lifespan(app: FastAPI):
     # startup
     logger.info("Starting up application...")
     db = DatabaseManager()
-    await db.initialize_database()
+    await db.initialize_database_execution()
     app.state.db = db
     yield
 
     # shutdown
     logger.info("Shutting down application...")
-    await db.close()
+    await db.close_database_execution()
 
 def create_app() -> FastAPI:
     app = FastAPI(
