@@ -26,7 +26,7 @@ class DatabaseManager:
                 max_size=20
             )
 
-            logger.info("PostgreSQL connection pool created successfully") #Set and load logger to the db
+            logger.info("PostgreSQL connection pool created successfully")
 
         except Exception as e:
             logger.error(f"Error initializing database: {str(e)}")

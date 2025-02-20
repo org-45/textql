@@ -1,11 +1,11 @@
-from src.vector_comparision import call_pg_database
+from src.vector_comparision import get_similar_rows_from_pg
 
 async def construct_prompt(natural_language_input: str, queries: list, schema: dict) -> str:
     """Constructs the prompt for the LLM using the schema, example queries, and user input."""
     
     reference_prompts = "\n".join([f"- {query['description']}: {query['sql']}" for query in queries])
     table_info = "\n".join([f"Table: {table}, Columns: {', '.join(columns)}" for table, columns in schema['tables'].items()])
-    top_k = await call_pg_database(natural_language_input)
+    top_k = await get_similar_rows_from_pg(natural_language_input)
 
     prompt = f"""
     Act as a data analyst and SQL expert. You will translate the following natural language input into a SQL query that will run against a Postgres DB.

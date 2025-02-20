@@ -38,7 +38,7 @@ COLUMN_TYPE_MAPPING = {
         "day_of_week": "INTEGER",
         "airline": "TEXT",
         "flight_number": "NUMERIC",
-        "tail_number": "NUMERIC",
+        "tail_number": "TEXT",
         "origin_airport": "TEXT",
         "destination_airport": "TEXT",
         "scheduled_departure": "TEXT",
