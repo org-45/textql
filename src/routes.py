@@ -35,14 +35,13 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
     @app.exception_handler(RateLimitExceeded)
     async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
         return PlainTextResponse(str(exc), status_code=429)
-    
     async def get_db(request: Request) -> DatabaseManager:
         return request.app.state.db
 
     @app.get("/", response_class=HTMLResponse)
     async def read_root(request: Request, db: DatabaseManager = Depends(get_db)):
         try:
-            return templates.TemplateResponse(
+            template_response = templates.TemplateResponse(
                 "index.html",
                 {
                     "request": request,
@@ -51,6 +50,8 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
                     "now": datetime.now()
                 }
             )
+            logger.info ("The Root has been called")
+            return template_response
         except Exception as e:
             logger.error(f"Error in read_root: {e}")
             raise HTTPException(status_code=500, detail="Internal server error")
@@ -64,10 +65,10 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
     ):
         try:
             response = await generate_sql_from_llm(natural_language_input)
-            sql_query = response["data"].replace('sql', '').strip()
+            sql_query = response["data"].replace('\n', ' ').strip()
             column_names, results = await db.execute_query(sql_query)
-            
-            return templates.TemplateResponse(
+
+            template_response = templates.TemplateResponse(
                 "table.html",
                 {
                     "request": request,
@@ -76,9 +77,11 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
                     "sql_query": sql_query
                 }
             )
+            logger.info("query is generated")
+            return template_response
         except Exception as e:
             logger.error(f"Error in generate_sql_endpoint: {e}")
-            return templates.TemplateResponse(
+            template_response =  templates.TemplateResponse(
                 "notification.html",
                 {
                     "request": request,
@@ -86,6 +89,7 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
                     "type": "error"
                 }
             )
+            return template_response
 
     @app.post(f"{api_prefix}/query", response_model=QueryResult)
     async def execute_query_api(
@@ -94,7 +98,8 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
     ):
         try:
             column_names, results = await db.execute_query(query_input.query)
-            return QueryResult(column_names=column_names, results=results)
+            template_response =  QueryResult(column_names=column_names, results=results)
+            return template_response
         except Exception as e:
             logger.error(f"API error in execute_query: {e}")
             raise HTTPException(status_code=500, detail=str(e))

@@ -76,8 +76,7 @@ async def generate_sql_from_llm(natural_language_input: str) -> dict:
         schema = await load_schema()
 
         # 2. Construct the prompt
-        prompt = construct_prompt(natural_language_input, queries, schema)
-
+        prompt = await construct_prompt(natural_language_input, queries, schema)
         # 3. Call the Gemini API
         gemini_output = call_llm_api(prompt)
         logger.debug(f"Generated SQL query: {gemini_output}")
