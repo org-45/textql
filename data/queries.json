@@ -86,5 +86,34 @@
   {
     "sql": "SELECT avg(ARRIVAL_DELAY), avg(DEPARTURE_DELAY), AIRLINE from flights GROUP BY AIRLINE;",
     "description": "The average departure delay, by airline."
-  }
+  },
+    {
+      "sql": "SELECT * FROM flights WHERE departure_delay IS NULL OR departure_delay = '' LIMIT 5;",
+      "description": "Find flights with missing departure delay data."
+    },
+    {
+      "sql": "SELECT airline, COUNT(*) AS totalflights FROM flights WHERE airline IS NOT NULL GROUP BY airline HAVING COUNT(*) > 0 ORDER BY totalflights DESC LIMIT 5;",
+      "description": "Count flights per airline, ensuring airline values are not NULL."
+    },
+    {
+      "sql": "SELECT * FROM airports WHERE COALESCE(country, '') = '' LIMIT 5;",
+      "description": "List airports with missing or empty country information."
+    },
+    {
+      "sql": "SELECT year, month, day, COUNT(*) AS flightsperday FROM flights GROUP BY year, month, day HAVING COUNT(*) > 0 ORDER BY flightsperday DESC LIMIT 5;",
+      "description": "List days with flight counts, filtering out days with no flights."
+    },
+    {
+      "sql": "SELECT *, CASE WHEN departure_delay IS NULL OR departure_delay = '' THEN 0 ELSE CAST(departure_delay AS NUMERIC) END AS delay FROM flights ORDER BY delay DESC LIMIT 5;",
+      "description": "Order flights by departure delay, treating missing or empty delays as 0."
+    },
+    {
+      "sql": "SELECT DISTINCT origin_airport FROM flights WHERE origin_airport IS NOT NULL AND origin_airport <> '';",
+      "description": "List distinct origin airports, excluding NULL or empty values."
+    },
+    {
+      "sql": "SELECT airline, AVG(CAST(COALESCE(departure_delay, '0') AS NUMERIC)) AS avgdelay FROM flights GROUP BY airline HAVING COUNT(*) > 0 ORDER BY avgdelay DESC LIMIT 5;",
+      "description": "Compute average departure delay per airline, converting delay values to numeric and substituting 0 for missing data."
+    }
+  
 ]
