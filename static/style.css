@@ -1,16 +1,13 @@
-
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
-
 ul[class],
 ol[class] {
   padding: 0;
 }
-
 
 body,
 h1,
@@ -30,7 +27,6 @@ dd {
   margin: 0;
 }
 
-
 body {
   min-height: 100vh;
   scroll-behavior: smooth;
@@ -38,28 +34,23 @@ body {
   line-height: 1.5;
 }
 
-
 ul[class],
 ol[class] {
   list-style: none;
 }
 
-
 a:not([class]) {
   text-decoration-skip-ink: auto;
 }
-
 
 img {
   max-width: 100%;
   display: block;
 }
 
-
 article > * + * {
   margin-block-start: 1em;
 }
-
 
 input,
 button,
@@ -67,7 +58,6 @@ textarea,
 select {
   font: inherit;
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -77,9 +67,6 @@ select {
     scroll-behavior: auto !important;
   }
 }
-
-
-
 
 :root {
   --primary-color: #1c1c1c;
@@ -94,7 +81,8 @@ select {
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana,
+    sans-serif;
   line-height: 1.6;
   color: var(--text-color);
   background-color: var(--background-color);
@@ -148,7 +136,8 @@ label {
   color: var(--primary-color);
 }
 
-select, input[type="text"] {
+select,
+input[type="text"] {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
@@ -157,7 +146,8 @@ select, input[type="text"] {
   transition: border-color var(--transition-duration) ease;
 }
 
-select:focus, input[type="text"]:focus {
+select:focus,
+input[type="text"]:focus {
   border-color: var(--secondary-color);
   outline: none;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -172,7 +162,9 @@ button.btn {
   cursor: pointer;
   font-size: 16px;
   font-weight: bold;
-  transition: background-color var(--transition-duration) ease, transform var(--transition-duration) ease;
+  transition: background-color var(--transition-duration)
+      ease,
+    transform var(--transition-duration) ease;
   display: flex;
   align-items: center;
 }
@@ -188,20 +180,6 @@ button.btn:active {
   box-shadow: none;
 }
 
-button .loading-spinner {
-  display: none;
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid #fff;
-  border-top: 2px solid transparent;
-  border-radius: 50%;
-  margin-left: 0.5rem;
-  animation: spin 1s linear infinite;
-}
-
-button:disabled .loading-spinner {
-  display: inline-block;
-}
 
 #prompt-outbox {
   background-color: #e0e0e0;
@@ -223,7 +201,7 @@ button:disabled .loading-spinner {
 }
 
 #prompt-text {
-  font-family: 'Consolas', monospace;
+  font-family: "Consolas", monospace;
   font-size: 15px;
   color: var(--text-color);
   margin-top: 8px;
@@ -242,7 +220,8 @@ table {
   overflow: hidden;
 }
 
-th, td {
+th,
+td {
   border: 1px solid #ddd;
   padding: 14px 16px;
   text-align: left;
@@ -284,11 +263,6 @@ footer {
   margin-top: 2rem;
   text-align: center;
   color: #777;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 
@@ -333,8 +307,6 @@ footer {
   background-color: #f2f2f2;
 }
 
-
-
 .table-scroll-wrapper::-webkit-scrollbar {
   height: 8px;
 }
@@ -349,8 +321,36 @@ footer {
   border-radius: 4px;
 }
 
-
 .table-scroll-wrapper {
   scrollbar-width: thin;
   scrollbar-color: #999 #eee;
+}
+
+#overlay-spinner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Spinner styling */
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(0, 0, 0, 0.1);
+  border-top: 5px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

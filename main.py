@@ -33,9 +33,8 @@ async def lifespan(app: FastAPI):
     db = DatabaseManager(POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST, POSTGRES_PORT)
     await db.initialize_database_execution()
     app.state.db = db
-
+    app.state.sql_store = {}
     yield
-
     logger.info("Shutting down application...")
     await db.close_database_execution()
     logger.info("Shutdown and cleaned database")

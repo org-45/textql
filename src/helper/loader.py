@@ -1,3 +1,5 @@
+# helper function to load schema and sample data to prompt
+
 import json
 import logging
 import random

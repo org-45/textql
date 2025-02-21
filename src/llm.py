@@ -7,13 +7,14 @@ import sqlparse
 from dotenv import load_dotenv
 from src.helper.loader import load_queries, load_schema
 from src.helper.prompter import construct_prompt
+from src.vector_comparision import get_similar_rows_from_vector
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 
-def call_llm_api(prompt: str) -> str:
+async def call_llm_api(prompt: str) -> str:
     """Calls the Gemini API and returns the generated text."""
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -75,20 +76,24 @@ async def generate_sql_from_llm(natural_language_input: str) -> dict:
         queries = await load_queries()
         schema = await load_schema()
 
-        # 2. Construct the prompt
-        prompt = await construct_prompt(natural_language_input, queries, schema)
-        # 3. Call the Gemini API
-        gemini_output = call_llm_api(prompt)
+        # 2. Get similar rows from vector table
+        similar_rows ,_ = await get_similar_rows_from_vector(natural_language_input,2)
+
+        # 3. Construct the prompt
+        prompt = await construct_prompt(natural_language_input,similar_rows, queries, schema)
+
+        # 4. Call the LLM API
+        gemini_output = await call_llm_api(prompt)
         logger.debug(f"Generated SQL query: {gemini_output}")
 
-        # 4. Clean the output
+        # 5. Clean the output
         cleaned_output = clean_llm_output(gemini_output)
         logger.debug(f"Cleaned SQL query: {cleaned_output}")
 
-        # 5. validate sql donot contain harmful queries like drop, delete, add, update
+        # 6. Validate sql donot contain harmful queries like drop, delete, add, update
         validate_llm_output_sql(cleaned_output)
 
-        # 6. Format SQL query
+        # 7. Format SQL query
         formatted_sql = format_llm_output_sql(cleaned_output)
 
         # include the original prompt in output too

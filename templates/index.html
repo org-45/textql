@@ -1,68 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="TextQL - SQL Query Interface">
-    <title>{{ app_name }}</title>
+    <title>TextQL</title>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <h1>{{ app_name }}</h1>
+      <h1>TextQL</h1>
     </header>
-
     <main class="container">
-        <div id="notification-board" class="notification" role="alert" aria-live="polite"></div>
+        <!-- notifications block -->
+      <div id="notification-board" role="alert" aria-live="polite">
+        {% if message %}
+          <div class="notification {{ type }}">
+            {{ message }}
+          </div>
+        {% endif %}
+      </div>
 
-        <form class="form" hx-post="/generate-sql" hx-target="#output" hx-swap="innerHTML" hx-indicator="#loading">
-            <div class="form-group">
-                <label for="natural_language_input">Enter Natural Language Query:</label>
-                <input type="text" id="natural_language_input" name="natural_language_input" placeholder="Describe your query in natural language" required>
-            </div>
-
-            <button type="submit" class="btn">
-                Generate SQL
-                <span class="loading-spinner" id="loading"></span>
-            </button>
+      <!-- query Form -->
+      <section id="text-to-sql">
+        <h2>Enter Natural Language Query</h2>
+        <form id="query-form" method="post"
+              hx-post="/generate-sql"
+              hx-target="#output"
+              hx-swap="innerHTML"
+        >
+          <div class="form-group">
+            <input type="text" name="natural_language_input" placeholder="Describe your query in natural language" required />
+          </div>
+          <button type="submit" class="btn">Generate SQL</button>
         </form>
+      </section>
 
-        <div id="output" role="region" aria-live="polite">
-            <!-- results will be loaded here -->
-        </div>
+      <!-- output container for generated SQL and query results -->
+      <div id="output">
+        <!-- this fragment will be replaced by htmx responses -->
+      </div>
     </main>
-
     <footer>
-        <p>&copy; {{ app_name }} {{ now.year }}</p>
+      <p>&copy; Textql</p>
     </footer>
-
-    <script>
-        // add client-side validation and error handling
-        const forms = document.querySelectorAll('form');
-        forms.forEach(form => {
-            form.addEventListener('htmx:beforeRequest', function(event) {
-                const select = document.getElementById('user_input');
-                const input = document.getElementById('natural_language_input');
-                if (!select.value && !input.value) {
-                    event.preventDefault();
-                    document.getElementById('notification-board').innerHTML = `
-                        <div class="alert alert-error">
-                            Please select a query or enter a natural language query before proceeding.
-                        </div>
-                    `;
-                }
-            });
-        });
-
-        // update prompt text when query is selected or natural language input is provided
-        document.getElementById('user_input').addEventListener('change', function(event) {
-            document.getElementById('prompt-text').textContent = event.target.value;
-        });
-
-        document.getElementById('natural_language_input').addEventListener('input', function(event) {
-            document.getElementById('prompt-text').textContent = event.target.value;
-        });
-    </script>
-</body>
+  </body>
 </html>

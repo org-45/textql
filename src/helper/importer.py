@@ -1,3 +1,5 @@
+#imports data from csv, feeds it to tables and in vector index
+
 import os
 import psycopg2
 from psycopg2.extras import execute_batch
