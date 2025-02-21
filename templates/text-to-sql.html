@@ -1,46 +1,52 @@
-{% if sql_query %}
-  <div id="generated-sql">
-    <h4>Query Results</h4>
-    <div id="prompt-outbox" aria-live="polite">
-        <pre id="prompt-text">{{ sql_query | escape }}</pre>
-    </div>
+{% if message %}
+    <div class="error-message">{{ message }}</div>
+{% else %}
+    {% if sql_query %}
+        <div>
+            <h3>Generated SQL Query:</h3>
+            <div class="query-box">{{ sql_query }}</div>
+            
+            {% if query_token %}
+                <form>
+                    <input type="hidden" name="query_token" value="{{ query_token }}">
+                    <button 
+                        hx-post="/execute-sql"
+                        hx-trigger="click"
+                        hx-target="#query-result"
+                        hx-include="[name='query_token']"
+                        type="button"
+                    >
+                        Execute Query
+                        <span class="spinner htmx-indicator"></span>
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    {% endif %}
 
-    {% if query_token %}
-      <form method="post"
-            hx-post="/execute-sql"
-            hx-target="#output"
-            hx-swap="innerHTML"
-        >
-        <input type="hidden" name="query_token" value="{{ query_token }}" />
-        <button type="submit" class="btn">Execute SQL</button>
-      </form>
-      {% endif %}
-  </div>
-{% endif %}
-
-{% if column_names %}
-    <div class="table-container">
-        <div class="table-scroll-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        {% for column in column_names %}
-                            <th>{{ column | escape }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in results %}
+    {% if column_names and results %}
+        <div>
+            <h3>Query Results:</h3>
+            <div class="table-container">
+                <table class="results-table">
+                    <thead>
                         <tr>
-                            {% for item in row %}
-                                <td>{{ item | escape }}</td>
+                            {% for column in column_names %}
+                                <th>{{ column }}</th>
                             {% endfor %}
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for row in results %}
+                            <tr>
+                                {% for value in row %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-{% else %}
-    <p>No results found.</p>
+    {% endif %}
 {% endif %}

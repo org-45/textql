@@ -1,49 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TextQL - SQL Query Interface">
-    <title>TextQL</title>
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <title>{{ app_name }}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
     <link rel="stylesheet" href="/static/style.css">
-  </head>
-  <body>
-    <header>
-      <h1>TextQL</h1>
-    </header>
-    <main class="container">
-        <!-- notifications block -->
-      <div id="notification-board" role="alert" aria-live="polite">
-        {% if message %}
-          <div class="notification {{ type }}">
-            {{ message }}
-          </div>
-        {% endif %}
-      </div>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ app_name }}</h1>
+        <div>
+            <h3>Enter your query:</h3>
+            <form>
+                <textarea 
+                    id="nlInput"
+                    name="natural_language_input"
+                    placeholder="e.g., Show me all users"></textarea>
+                <button 
+                    type="button"
+                    hx-post="/generate-sql"
+                    hx-trigger="click"
+                    hx-target="#query-result"
+                    hx-include="#nlInput"
+                >
+                    Generate SQL
+                    <span class="spinner htmx-indicator"></span>
+                </button>
+            </form>
+        </div>
 
-      <!-- query Form -->
-      <section id="text-to-sql">
-        <h2>Enter Natural Language Query</h2>
-        <form id="query-form" method="post"
-              hx-post="/generate-sql"
-              hx-target="#output"
-              hx-swap="innerHTML"
-        >
-          <div class="form-group">
-            <input type="text" name="natural_language_input" placeholder="Describe your query in natural language" required />
-          </div>
-          <button type="submit" class="btn">Generate SQL</button>
-        </form>
-      </section>
-
-      <!-- output container for generated SQL and query results -->
-      <div id="output">
-        <!-- this fragment will be replaced by htmx responses -->
-      </div>
-    </main>
-    <footer>
-      <p>&copy; Textql</p>
-    </footer>
-  </body>
+        <div id="query-result">
+            <!-- will be replaced by text-to-sql.html template -->
+        </div>
+    </div>
+</body>
 </html>

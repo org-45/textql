@@ -101,7 +101,6 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
         db: DatabaseManager = Depends(get_db)
     ):
         try:
-            print(query_token)
             sql_query = request.app.state.sql_store.get(query_token)
             if not sql_query:
                 raise HTTPException(status_code=400, detail="Invalid or expired query token.")
