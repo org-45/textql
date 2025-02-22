@@ -49,14 +49,15 @@ def format_llm_output_sql(sql_query: str) -> str:
 
 def validate_llm_output_sql(sql_query: str) -> bool:
     """Validates the SQL query to ensure it does not contain any potentially dangerous statements."""
-    dangerous_patterns = [r'\bDROP\b', r'\bDELETE\b', r'\bTRUNCATE\b', r'\bALTER\b', r'\bUPDATE\b']
+    dangerous_patterns = [r'\bDROP\b', r'\bDELETE\b', r'\bTRUNCATE\b', r'\bALTER\b',
+                           r'\bUPDATE\b', r'\bCREATE\b', r'\bGRANT\b', r'\bREVOKE\b']
     for pattern in dangerous_patterns:
         if re.search(pattern, sql_query, re.IGNORECASE):
             logger.warning("Dangerous SQL keyword found! Preventing execution.")
             raise ValueError("The SQL query contains a potentially dangerous statement and cannot be executed.")
     return True
 
-# main language ->  SQL pipeline
+# main language->SQL pipeline
 def generate_sql_from_llm(db:DatabaseManager,natural_language_input: str) -> dict:
     """Generates a SQL query from natural language input using the Gemini API."""
     try:
@@ -70,6 +71,8 @@ def generate_sql_from_llm(db:DatabaseManager,natural_language_input: str) -> dic
         # 3. Construct the prompt
         prompt = construct_prompt(natural_language_input,similar_rows, queries, schema)
 
+        print(prompt)
+        
         # 4. Call the LLM API
         gemini_output = call_llm_api(prompt)
         logger.debug(f"Generated SQL query: {gemini_output}")

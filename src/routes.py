@@ -70,7 +70,7 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
             sql_query = postprocess_llm_pipeline_data(pipeline_response)
 
             query_token = str(uuid.uuid4())
-            app.state.sql_store[query_token] = {"nl": natural_language_input, "sql": sql_query}
+            app.state.sql_store[query_token] = {"nl": sanitized_input, "sql": sql_query}
             logger.info("SQL query generated and stored with token %s", query_token)
 
             return templates.TemplateResponse(

@@ -242,7 +242,9 @@ class DatabaseManager:
         cursor = None
         try:
             cursor = self._conn.cursor()
-            cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
+            cursor.execute("""SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
+                                AND table_name NOT IN ('feedback','text_embeddings');
+                           """)
             tables = cursor.fetchall()
             schema = {"tables": {}}
             for table in tables:
