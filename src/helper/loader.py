@@ -14,7 +14,7 @@ def load_queries(filepath: str = "data/queries.json") -> list:
     try:
         with open(filepath, 'r') as f:
             queries = json.load(f)
-            return random.sample(queries, min(5, len(queries)))
+            return random.sample(queries, min(2, len(queries)))
     except Exception as e:
         logger.error(f"Error loading queries: {e}")
         return []

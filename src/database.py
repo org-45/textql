@@ -178,7 +178,7 @@ class DatabaseManager:
         """Retrieve similar rows based on vector embedding similarity."""
         cursor = None
         sql = f"""
-        SELECT table_name, row_data, embedding <
+        SELECT table_name, row_data, embedding <#> CAST(%s AS vector) AS similarity
         FROM text_embeddings
         ORDER BY similarity ASC
         LIMIT %s

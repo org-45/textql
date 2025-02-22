@@ -1,9 +1,9 @@
 import logging
 from src.database import DatabaseManager
 from sentence_transformers import SentenceTransformer
+from src.config.settings import SENTENCE_TRANSFORMER_MODEL
 
 logger = logging.getLogger(__name__)
-SENTENCE_TRANSFORMER_MODEL = "all-MiniLM-L6-v2"
 
 def get_similar_rows_from_vector(db: DatabaseManager, user_query: str, num_of_rows: int = 2) -> tuple:
     """Fetch similar rows using vector embeddings synchronously."""

@@ -1,10 +1,11 @@
 def construct_prompt(natural_language_input: str, top_k: str, queries: list, schema: dict) -> str:
     """Constructs an enhanced prompt for the LLM."""
     reference_prompts = "\n".join([f"- {query['description']}: {query['sql']}" for query in queries])
-
     table_info = "\n".join([
-        f"Table: {table}, Columns: {', '.join(data['columns'])}, Sample Data: {data['samples'][0] if data['samples'] else []}"
-        for table, data in schema['tables'].items()
+        f"""Table: {table},Columns: {', '.join(data['columns'])},Sample Data: {', '.join([f'{key}: {str(value)}' for row in data['samples'][:1] 
+                                     for key, value in row.items()]) 
+                                     if data['samples'] else '[]'}"""
+                                     for table, data in schema['tables'].items()
     ])
 
     prompt = f"""
