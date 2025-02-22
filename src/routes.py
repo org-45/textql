@@ -1,3 +1,4 @@
+import re
 import logging
 import uuid
 from fastapi import FastAPI, Request, Form, HTTPException
@@ -22,6 +23,13 @@ class QueryResult(BaseModel):
 
 def postprocess_llm_pipeline_data(response: object) -> str:
     return response["data"].replace('\n', ' ').strip()
+
+def sanitize_query(input_text: str) -> str:
+    """Sanitize user query: allow only alphabet and numbers, limit to 50 words."""
+    sanitized = re.sub(r'[^a-zA-Z0-9\s]', '', input_text)
+    words = sanitized.split()
+    limited_words = words[:50]
+    return ' '.join(limited_words)
 
 def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
     limiter = Limiter(key_func=get_remote_address)
@@ -48,8 +56,12 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
     @limiter.limit("1/15seconds")
     def generate_sql_endpoint(request: Request, natural_language_input: str = Form(...)):
         try:
+            sanitized_input = sanitize_query(natural_language_input)
+            if not sanitized_input.strip():
+                raise ValueError("Sanitized query is empty or invalid")
+
             db = request.app.state.db
-            pipeline_response = generate_sql_from_llm(db, natural_language_input)
+            pipeline_response = generate_sql_from_llm(db, sanitized_input)
             if "error" in pipeline_response:
                 return templates.TemplateResponse(
                     "text-to-sql.html",
