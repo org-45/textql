@@ -14,7 +14,7 @@ from src.llm import generate_sql_from_llm
 logger = logging.getLogger(__name__)
 
 class QueryInput(BaseModel):
-    query: constr(min_length=1, max_length=1000)
+    query: constr(min_length=1, max_length=1000) #type: ignore
 
 class QueryResult(BaseModel):
     column_names: List[str]

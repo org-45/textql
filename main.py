@@ -1,6 +1,5 @@
 import uvicorn
 import logging
-import os
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -9,17 +8,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 from src.routes import setup_routes
 from src.database import DatabaseManager
-
-from dotenv import load_dotenv
-load_dotenv()
-
-POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
-POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "postgres")
-POSTGRES_DB = os.environ.get("POSTGRES_DB", "vector_db")
-POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = int(os.environ.get("POSTGRES_PORT", 5432))
-
-from src.config.settings import APP_NAME, ALLOWED_HOSTS, ALLOWED_ORIGINS, API_PREFIX
+from src.config.settings import *
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,12 +20,12 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Starting up application...")
     db = DatabaseManager(POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST, POSTGRES_PORT)
-    await db.initialize_database_execution()
+    db.initialize_database_execution()
     app.state.db = db
     app.state.sql_store = {}
     yield
     logger.info("Shutting down application...")
-    await db.close_database_execution()
+    db.close_database_execution()
     logger.info("Shutdown and cleaned database")
 
 def create_app() -> FastAPI:
@@ -67,17 +56,15 @@ def create_app() -> FastAPI:
     )
 
     templates = Jinja2Templates(directory="templates")
-
     setup_routes(app, templates, API_PREFIX)
 
     return app
 
-if __name__ != "__main__":
-    app = create_app()
+app = create_app()
 
 if __name__ == "__main__":
     uvicorn.run(
-        "main:app",
+        app,
         host="0.0.0.0",
         port=8000,
         reload=True,

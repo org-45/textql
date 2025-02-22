@@ -1,28 +1,25 @@
-# helper function to setup prompt to be sent to llm
-
-async def construct_prompt(natural_language_input: str, top_k: str, queries: list, schema: dict) -> str:
-    """Constructs the prompt for the LLM using the schema, example queries, and user input."""
-    
+def construct_prompt(natural_language_input: str, top_k: str, queries: list, schema: dict) -> str:
+    """Constructs an enhanced prompt for the LLM."""
     reference_prompts = "\n".join([f"- {query['description']}: {query['sql']}" for query in queries])
-    table_info = "\n".join([f"Table: {table}, Columns: {', '.join(columns)}" for table, columns in schema['tables'].items()])
+    table_info = "\n".join([
+        f"Table: {table}, Columns: {', '.join(data['columns'])}, Sample Data: {data['samples'][:1]}"
+        for table, data in schema['tables'].items()
+    ])
 
     prompt = f"""
-    Act as a data analyst and SQL expert. You will translate the following natural language input into a SQL query that will run against a Postgres DB.
+    Act as a data analyst and SQL expert. Translate this natural language input into a SQL query for a Postgres DB:
     "{natural_language_input}"
 
-    Here is the schema information. These are the tables and columns:
+    Schema and sample data:
     {table_info}
     
-    Do not suggest columns outside these keywords.
-    Here are some reference prompts that might come in handy:
+    Reference examples:
     {reference_prompts}
 
-    These are some of the most similar results for the natural language query that were matched from the vector search.
-    You can infer data from these results if needed:
+    Similar results from vector search:
     {top_k}
 
-    Also, understand if the given natural language contains any typos as per the provided schema info.
-
-    Return the SQL query only. No other text.
+    Ensure the query is safe (no DROP, DELETE, UPDATE) and correct typos based on schema.
+    Return only the SQL query.
     """
     return prompt
