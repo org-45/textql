@@ -1,0 +1,9 @@
+<div class="message success" style="animation: slideIn 0.3s ease-out;">
+    {{ message }}
+    {% if corrected_sql %}
+        <div class="query-box" style="margin-top: 1rem;">
+            <h4>Corrected SQL:</h4>
+            <pre>{{ corrected_sql }}</pre>
+        </div>
+    {% endif %}
+</div>

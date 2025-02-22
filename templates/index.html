@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <div id="toast-container"></div>
+
     <div class="container">
         <h1>{{ app_name }}</h1>
         <div>
@@ -23,6 +25,7 @@
                     hx-trigger="click"
                     hx-target="#query-result"
                     hx-include="#nlInput"
+                    class="primary-button"
                 >
                     Generate SQL
                     <span class="spinner htmx-indicator"></span>
@@ -34,5 +37,182 @@
             <!-- will be replaced by text-to-sql.html template -->
         </div>
     </div>
+
+    <script>
+        // toast notification system
+        const toastContainer = document.getElementById('toast-container');
+        
+        function createToast(message, type = 'info', duration = 5000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const content = document.createElement('div');
+            content.className = 'toast-content';
+            
+            const icon = document.createElement('span');
+            icon.className = 'toast-icon';
+            switch(type) {
+                case 'success':
+                    icon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>`;
+                    break;
+                case 'error':
+                    icon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>`;
+                    break;
+                case 'loading':
+                    icon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 2a10 10 0 0 1 10 10"></path>
+                    </svg>`;
+                    break;
+                default:
+                    icon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12" y2="8"></line>
+                    </svg>`;
+            }
+            content.appendChild(icon);
+            
+            const text = document.createElement('span');
+            text.className = 'toast-message';
+            text.textContent = message;
+            content.appendChild(text);
+            
+            if (type === 'error') {
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'toast-close';
+                closeBtn.innerHTML = '×';
+                closeBtn.onclick = () => toast.remove();
+                content.appendChild(closeBtn);
+            }
+            
+            toast.appendChild(content);
+            toastContainer.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.transform = 'translateX(0)';
+                toast.style.opacity = '1';
+            });
+            
+            if (type !== 'error' && duration) {
+                setTimeout(() => {
+                    toast.style.transform = 'translateX(120%)';
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+            
+            return toast;
+        }
+
+        htmx.on('htmx:beforeRequest', (evt) => {
+            createToast('Processing request...', 'loading');
+        });
+
+        htmx.on('htmx:afterRequest', (evt) => {
+            const loadingToasts = document.querySelectorAll('.toast.loading');
+            loadingToasts.forEach(toast => toast.remove());
+
+            if (evt.detail.failed) {
+                if (evt.detail.xhr.status === 429) {
+                    createToast('Rate limit exceeded. Please wait before trying again.', 'error');
+                } else {
+                    createToast('An error occurred while processing your request.', 'error');
+                }
+            }
+        });
+
+        htmx.on('htmx:afterSwap', (evt) => {
+            const messageEl = evt.detail.target.querySelector('.message');
+            if (messageEl) {
+                const isError = messageEl.classList.contains('error');
+                const message = messageEl.textContent.trim();
+                createToast(message, isError ? 'error' : 'success');
+                messageEl.remove();
+            }
+        });
+
+    function adjustColumnWidths() {
+        const table = document.querySelector('.results-table');
+        if (!table) return;
+
+        const headers = table.querySelectorAll('th');
+        headers.forEach(header => {
+            const columnText = header.getAttribute('data-column');
+            if (columnText) {
+                const span = document.createElement('span');
+                span.style.visibility = 'hidden';
+                span.style.position = 'absolute';
+                span.style.whiteSpace = 'nowrap';
+                span.textContent = columnText;
+                document.body.appendChild(span);
+
+                const textWidth = span.offsetWidth;
+                document.body.removeChild(span);
+
+                const minWidth = textWidth + 40;
+                header.style.minWidth = `${minWidth}px`;
+                
+                const columnIndex = Array.from(header.parentElement.children).indexOf(header);
+                const cells = table.querySelectorAll(`tbody tr td:nth-child(${columnIndex + 1})`);
+                cells.forEach(cell => {
+                    cell.style.minWidth = `${minWidth}px`;
+                });
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', adjustColumnWidths);
+    document.body.addEventListener('htmx:afterSwap', adjustColumnWidths);
+
+    let isResizing = false;
+    let currentTh = null;
+    let startX, startWidth;
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+
+        const diff = e.pageX - startX;
+        if (currentTh) {
+            const newWidth = Math.max(startWidth + diff, 
+                                    parseInt(currentTh.style.minWidth || 0, 10));
+            currentTh.style.width = `${newWidth}px`;
+            
+            const columnIndex = Array.from(currentTh.parentElement.children).indexOf(currentTh);
+            const cells = currentTh.closest('table')
+                .querySelectorAll(`tbody tr td:nth-child(${columnIndex + 1})`);
+            cells.forEach(cell => {
+                cell.style.width = `${newWidth}px`;
+            });
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        isResizing = false;
+        currentTh = null;
+    });
+
+    document.body.addEventListener('mousedown', function(e) {
+        const th = e.target.closest('th');
+        if (!th) return;
+
+        const rect = th.getBoundingClientRect();
+        const isClickNearRight = e.clientX > rect.right - 8;
+
+        if (isClickNearRight) {
+            isResizing = true;
+            currentTh = th;
+            startX = e.pageX;
+            startWidth = rect.width;
+            e.preventDefault();
+        }
+    });
+</script>
 </body>
 </html>

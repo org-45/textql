@@ -1,0 +1,67 @@
+<div class="feedback-correction">
+    <form 
+        hx-post="/submit-feedback" 
+        hx-target="#feedback-result" 
+        hx-swap="innerHTML"
+    >
+        <input type="hidden" name="query_token" value="{{ query_token }}">
+        <input type="hidden" name="feedback" value="no">
+        <label for="corrected_sql">Please provide the correct SQL query:</label>
+        <textarea name="corrected_sql" id="corrected_sql" rows="5" cols="50" required>{{ original_sql }}</textarea>
+        <button type="submit" class="primary-button">Submit Correction</button>
+    </form>
+</div>
+
+<script>
+    htmx.on("htmx:afterSwap", function(evt) {
+        if (evt.detail.target.id === "feedback-result") {
+            if (evt.detail.target.querySelector('.message.success')) {
+                setTimeout(() => {
+                    const feedbackGroup = document.querySelector('.feedback-group');
+                    const actionsContainer = document.querySelector('.actions-container')
+                    const messageSuccess = document.querySelector('.message')
+
+                    if (feedbackGroup) {
+                        feedbackGroup.style.opacity = '0';
+                        feedbackGroup.style.transform = 'translateY(-10px)';
+
+                        actionsContainer.style.opacity = '0'
+                        actionsContainer.style.transform = 'translateY(-10px)';
+
+                        messageSuccess.style.opacity = '0'
+                        messageSuccess.style.transform = 'translateY(-10px)';
+
+                        setTimeout(() => {
+                            feedbackGroup.style.display = 'none';
+                            actionsContainer.style.display = 'none'
+                            messageSuccess.style.display = 'none'
+                        }, 5000);
+                    }
+                }, 3000);
+            }
+        }
+    });
+</script>
+
+<style>
+    .query-section {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    }
+
+    .message.success {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
