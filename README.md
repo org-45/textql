@@ -100,7 +100,7 @@ Data flows from natural language input to SQL generation, execution, and feedbac
 
 
 **Architecture**
-```memaid
+```mermaid
 sequenceDiagram
     participant U as User
     participant A as FastAPI + HTMX UI
