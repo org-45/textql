@@ -4,6 +4,8 @@ set -euo pipefail
 # check for required commands
 command -v docker >/dev/null 2>&1 || { echo "Error: docker is not installed."; exit 1; }
 command -v python3 >/dev/null 2>&1 || { echo "Error: python3 is not installed."; exit 1; }
+command -v curl >/dev/null 2>&1 || { echo "Error: curl is not installed."; exit 1; }
+command -v unzip >/dev/null 2>&1 || { echo "Error: unzip is not installed."; exit 1; }
 
 # load environment variables
 if [ ! -f ".env" ]; then
@@ -11,6 +13,54 @@ if [ ! -f ".env" ]; then
   exit 1
 fi
 export $(grep -v '^#' .env | xargs)
+
+# function to check and download data
+check_and_download_data() {
+    local DATA_DIR="data"
+    local REQUIRED_FILES=("flights.csv" "airlines.csv" "airports.csv")
+    local MISSING_FILES=false
+
+    # check for required CSV files
+    for file in "${REQUIRED_FILES[@]}"; do
+        if [ ! -f "$DATA_DIR/$file" ]; then
+            MISSING_FILES=true
+            echo "Missing required file: $file"
+        fi
+    done
+
+    # if any files are missing, download dataset
+    if [ "$MISSING_FILES" = true ]; then
+        echo "Downloading missing files..."
+        
+        # Download the dataset
+        echo "Downloading flight delays dataset..."
+        if curl -L -o "$DATA_DIR/flight-delays.zip" \
+            https://www.kaggle.com/api/v1/datasets/download/usdot/flight-delays; then
+            
+            echo "Download completed. Extracting files..."
+            unzip -o "$DATA_DIR/flight-delays.zip" -d "$DATA_DIR/"
+            rm "$DATA_DIR/flight-delays.zip"
+            
+            # verify files after download
+            for file in "${REQUIRED_FILES[@]}"; do
+                if [ ! -f "$DATA_DIR/$file" ]; then
+                    echo "Error: Failed to extract $file"
+                    exit 1
+                fi
+            done
+            
+            echo "Successfully downloaded and extracted all required files"
+        else
+            echo "Error: Failed to download dataset"
+            exit 1
+        fi
+    else
+        echo "All required CSV files present in data directory"
+    fi
+}
+
+# check and download data if needed
+check_and_download_data
 
 # get container ID
 CONTAINER_ID=$(docker ps -q --filter "name=textql_db")

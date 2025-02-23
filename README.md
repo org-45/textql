@@ -115,7 +115,7 @@ sequenceDiagram
 1.  clone https://github.com/chauchausoup/textql.git
 
 2.  copy .env file
-    
+
 3.  docker-compose up --build -d
 
 4.  ./init.sh
