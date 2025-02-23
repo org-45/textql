@@ -19,19 +19,30 @@ class DatabaseManager:
         self._conn = None
 
     async def initialize_database_execution(self):
-        """Initialize the database connection pool."""
+        """Initialize the database connection pool and extensions."""
         try:
             self._conn = await asyncpg.create_pool(
                 user=self.pg_user, password=self.pg_password, database=self.pg_db,
-                host=self.pg_host, port=self.pg_port
+                host=self.pg_host, port=self.pg_port, min_size=10, max_size=50 
             )
-            logger.info("PostgreSQL connection created successfully")
+            logger.info("PostgreSQL connection pool created successfully")
+
+            # set up extensions
+            async with self._conn.acquire() as conn:
+                async with conn.transaction():
+                    await conn.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
+                    await conn.execute('CREATE EXTENSION IF NOT EXISTS vector;')
+
+            #setup embeddings table
+            await self.create_embedding_table("text_embeddings")
+
+            logger.info("Database extensions initialized successfully")
         except Exception as e:
-            logger.error(f"Error initializing database connection: {str(e)}")
+            logger.error(f"Error initializing database connection or extensions: {str(e)}")
             raise
 
     async def close_database_execution(self):
-        """Close the database connection."""
+        """Close the database connection pool."""
         try:
             if self._conn:
                 await self._conn.close()
@@ -41,7 +52,7 @@ class DatabaseManager:
             raise
 
     async def execute_query(self, query: str) -> Tuple[List[str], List[List[Any]]]:
-        """Execute a SQL query and return column names and results with a 10-second timeout."""
+        """Execute a SQL query and return column names and results with a timeout."""
         try:
             async with self._conn.acquire() as conn:
                 async with conn.transaction():
@@ -51,14 +62,14 @@ class DatabaseManager:
                         return column_names, [list(row.values()) for row in results]
                     return [], []
         except asyncio.TimeoutError:
-            logger.error(f"Query execution timed out after 10 seconds: '{query}'")
-            raise HTTPException(status_code=504, detail="Query execution timed out after 10 seconds")
+            logger.error(f"Query execution timed out after {SQL_EXECUTION_TIMEOUT} seconds: '{query}'")
+            raise HTTPException(status_code=504, detail=f"Query execution timed out after {SQL_EXECUTION_TIMEOUT} seconds")
         except Exception as e:
             logger.error(f"Error executing query '{query}': {str(e)}")
             raise
 
-    async def create_table(self, table_name: str, column_defs: str, primary_key: str = None, foreign_keys: list = None):
-        """Create a table with specified column definitions, primary key, and foreign keys."""
+    async def create_table(self, table_name: str, column_defs: str, primary_key: str = None, foreign_keys: list = None, partition_by: str = None):
+        """Create a table with specified column definitions, primary key, foreign keys, and optional partitioning."""
         try:
             async with self._conn.acquire() as conn:
                 async with conn.transaction():
@@ -72,17 +83,16 @@ class DatabaseManager:
                         sql += ", " + ", ".join(fk_constraints)
                     sql += ");"
                     await conn.execute(sql)
-                    logger.info(f"Created table '{table_name}' with primary key '{primary_key}' and foreign keys")
+                    logger.info(f"Created table '{table_name}' with primary key '{primary_key}' and partition '{partition_by}'")
         except Exception as e:
             logger.error(f"Error creating table '{table_name}': {str(e)}")
             raise
 
     async def import_csv(self, table_name: str, csv_file: str, primary_key: str = None, foreign_keys: list = None):
-        """Import CSV data into a table with rollback on failure, using temp table for flights."""
+        """Import CSV data into a table with rollback on failure, using temp table and partitioning for flights."""
         try:
             async with self._conn.acquire() as conn:
                 async with conn.transaction():
-                    #open file in binary mode
                     with open(csv_file, "rb") as file:
                         reader = csv.reader(file.read().decode('utf-8').splitlines())
                         header = [col.strip().lower() for col in next(reader)]
@@ -124,7 +134,23 @@ class DatabaseManager:
                                 header=True,
                                 delimiter=','
                             )
-            logger.info(f"Imported CSV data into table '{table_name}' from '{csv_file}'")
+
+                    # create indexes after table creation and data import
+                    if table_name == "airlines":
+                        await conn.execute("CREATE INDEX IF NOT EXISTS idx_airlines_iata ON airlines (iata_code);")
+                    elif table_name == "airports":
+                        await conn.execute("CREATE INDEX IF NOT EXISTS idx_airports_iata ON airports (iata_code);")
+                        await conn.execute("CREATE INDEX IF NOT EXISTS idx_airports_state ON airports (state);")
+                        await conn.execute("CREATE INDEX IF NOT EXISTS idx_airports_country ON airports (country);")
+                    elif table_name == "flights":
+                        await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_flights_origin ON flights (origin_airport);")
+                        await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_flights_destination ON flights (destination_airport);")
+                        await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_flights_airline ON flights (airline);")
+                        await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_flights_departure_delay ON flights (departure_delay);")
+                        await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_flights_arrival_delay ON flights (arrival_delay);")
+                    elif table_name == "text_embeddings":
+                        await conn.execute("CREATE INDEX IF NOT EXISTS idx_text_embeddings ON text_embeddings USING ivfflat (embedding vector_l2_ops);")
+            logger.info(f"Imported CSV data into table '{table_name}' from '{csv_file}' with indexes created")
         except Exception as e:
             logger.error(f"Error importing CSV into table '{table_name}' from '{csv_file}': {str(e)}")
             raise

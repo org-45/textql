@@ -20,12 +20,6 @@ async def initialize_database():
     db = DatabaseManager(POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST, POSTGRES_PORT)
     await db.initialize_database_execution()
     try:
-        # ensure extensions
-        await db.execute_query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
-        await db.execute_query("CREATE EXTENSION IF NOT EXISTS vector;")
-
-        # create embedding table
-        await db.create_embedding_table("text_embeddings")
 
         # process CSV files using TABLES_CONFIG
         embed_model = SentenceTransformer(SENTENCE_TRANSFORMER_MODEL)
