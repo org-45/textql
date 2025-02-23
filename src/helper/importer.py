@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 from sentence_transformers import SentenceTransformer
 import json
 import csv
@@ -14,17 +15,17 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 DATA_DIR = "data"
 
-def initialize_database():
+async def initialize_database():
     """Initialize database with CSV data and embeddings."""
     db = DatabaseManager(POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST, POSTGRES_PORT)
-    db.initialize_database_execution()
+    await db.initialize_database_execution()
     try:
         # ensure extensions
-        db.execute_query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
-        db.execute_query("CREATE EXTENSION IF NOT EXISTS vector;")
+        await db.execute_query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
+        await db.execute_query("CREATE EXTENSION IF NOT EXISTS vector;")
 
         # create embedding table
-        db.create_embedding_table("text_embeddings")
+        await db.create_embedding_table("text_embeddings")
 
         # process CSV files using TABLES_CONFIG
         embed_model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -35,7 +36,7 @@ def initialize_database():
             foreign_keys = config.get('foreign_keys', [])
 
             logger.info(f"Importing {csv_path} into table '{table_name}'")
-            db.import_csv(table_name, csv_path, primary_key, foreign_keys)
+            await db.import_csv(table_name, csv_path, primary_key, foreign_keys)
 
             if table_name in ["airlines", "airports"]:
                 logger.info(f"Generating embeddings for table '{table_name}'")
@@ -43,15 +44,15 @@ def initialize_database():
                     csv_reader = csv.reader(file)
                     next(csv_reader)
                     row_data = [(table_name, json.dumps(row), embed_model.encode(json.dumps(row)).tolist()) for row in csv_reader]
-                db.insert_embeddings(table_name, row_data)
+                await db.insert_embeddings(table_name, row_data)
                 logger.info(f"Inserted embeddings for '{table_name}'")
 
     except Exception as e:
         logger.error(f"Error during database initialization: {e}")
         raise
     finally:
-        db.close_database_execution()
+        await db.close_database_execution()
         logger.info("Database initialization complete")
 
 if __name__ == "__main__":
-    initialize_database()
+    asyncio.run(initialize_database())

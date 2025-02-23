@@ -1,6 +1,4 @@
 python-dotenv==1.0.1
-psycopg-binary==3.2.4
-psycopg2-binary==2.9.9
 google-generativeai==0.8.4
 sqlparse==0.5.3
 fastapi==0.115.8
@@ -11,3 +9,4 @@ huggingface-hub==0.29.0
 uvicorn==0.34.0
 sentence-transformers==3.4.1
 python-multipart==0.0.20
+asyncpg==0.30.0

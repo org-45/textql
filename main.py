@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Starting up application...")
     db = DatabaseManager(POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST, POSTGRES_PORT)
-    db.initialize_database_execution()
+    await db.initialize_database_execution()
     app.state.db = db
     app.state.sql_store = {}
     yield

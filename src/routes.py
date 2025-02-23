@@ -1,7 +1,7 @@
 import re
 import logging
 import uuid
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form, HTTPException, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from typing import List, Any
@@ -10,6 +10,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from starlette.responses import PlainTextResponse
+from src.database import DatabaseManager
 from src.llm import generate_sql_from_llm
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,16 @@ class QueryResult(BaseModel):
 def postprocess_llm_pipeline_data(response: object) -> str:
     return response["data"].replace('\n', ' ').strip()
 
+def validate_sql_before_execute(sql_query: str) -> bool:
+    """Validates the SQL query to ensure it does not contain any potentially dangerous statements."""
+    dangerous_patterns = [r'\bDROP\b', r'\bDELETE\b', r'\bTRUNCATE\b', r'\bALTER\b',
+                           r'\bUPDATE\b', r'\bCREATE\b', r'\bGRANT\b', r'\bREVOKE\b']
+    for pattern in dangerous_patterns:
+        if re.search(pattern, sql_query, re.IGNORECASE):
+            logger.warning("Dangerous SQL keyword found! Preventing execution.")
+            raise ValueError("The SQL query contains a potentially dangerous statement and cannot be executed.")
+    return True
+
 def sanitize_query(input_text: str) -> str:
     """Sanitize user query: allow only alphabet and numbers, limit to 50 words."""
     sanitized = re.sub(r'[^a-zA-Z0-9\s]', '', input_text)
@@ -35,12 +46,15 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
     limiter = Limiter(key_func=get_remote_address)
     app.state.limiter = limiter
 
+    async def get_db(request: Request) -> DatabaseManager:
+        return request.app.state.db
+
     @app.exception_handler(RateLimitExceeded)
-    def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
         return PlainTextResponse(str(exc), status_code=429)
 
     @app.get("/", response_class=HTMLResponse)
-    def read_root(request: Request):
+    async def read_root(request: Request):
         try:
             template_response = templates.TemplateResponse(
                 "index.html",
@@ -54,14 +68,13 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
 
     @app.post("/generate-sql", response_class=HTMLResponse)
     @limiter.limit("1/15seconds")
-    def generate_sql_endpoint(request: Request, natural_language_input: str = Form(...)):
+    async def generate_sql_endpoint(request: Request, natural_language_input: str = Form(...), db: DatabaseManager = Depends(get_db)):
         try:
             sanitized_input = sanitize_query(natural_language_input)
             if not sanitized_input.strip():
                 raise ValueError("Sanitized query is empty or invalid")
 
-            db = request.app.state.db
-            pipeline_response = generate_sql_from_llm(db, sanitized_input)
+            pipeline_response = await generate_sql_from_llm(db, sanitized_input)
             if "error" in pipeline_response:
                 return templates.TemplateResponse(
                     "text-to-sql.html",
@@ -86,15 +99,17 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
 
     @app.post("/execute-sql", response_class=HTMLResponse)
     @limiter.limit("1/15seconds")
-    def execute_sql_endpoint(request: Request, query_token: str = Form(...)):
+    async def execute_sql_endpoint(request: Request, query_token: str = Form(...), db: DatabaseManager = Depends(get_db)):
         try:
             query_data = app.state.sql_store.get(query_token)
             if not query_data:
                 raise HTTPException(status_code=400, detail="Invalid or expired query token.")
             
             sql_query = query_data["sql"]
-            db = request.app.state.db
-            column_names, results = db.execute_query(sql_query)
+            
+            validate_sql_before_execute(sql_query)
+
+            column_names, results = await db.execute_query(sql_query)
             logger.info("SQL query executed successfully for token %s", query_token)
 
             del app.state.sql_store[query_token]
@@ -103,6 +118,9 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
                 "text-to-sql.html",
                 {"request": request, "sql_query": sql_query, "query_token": None, "column_names": column_names, "results": results}
             )
+        
+        except HTTPException as e:
+            raise e
         except Exception as e:
             logger.error(f"Error in execute_sql_endpoint: {e}")
             return templates.TemplateResponse(
@@ -112,7 +130,7 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
 
     @app.post("/submit-feedback", response_class=HTMLResponse)
     @limiter.limit("1/5seconds")
-    def submit_feedback(request: Request, query_token: str = Form(...), feedback: str = Form(...), corrected_sql: str = Form(default=None)):
+    async def submit_feedback(request: Request, query_token: str = Form(...), feedback: str = Form(...), corrected_sql: str = Form(default=None), db: DatabaseManager = Depends(get_db)):
         try:
             query_data = app.state.sql_store.get(query_token)
             if not query_data:
@@ -120,10 +138,9 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
 
             natural_language_input = query_data["nl"]
             original_sql = query_data["sql"]
-            db = request.app.state.db
 
             if feedback == "yes":
-                db.store_feedback(natural_language_input, original_sql, "yes")
+                await db.store_feedback(natural_language_input, original_sql, "yes")
                 return templates.TemplateResponse(
                     "feedback_response.html",
                     {
@@ -143,7 +160,7 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
                     }
                 )
             elif feedback == "no" and corrected_sql:
-                db.store_feedback(natural_language_input, original_sql, "no", corrected_sql)
+                await db.store_feedback(natural_language_input, original_sql, "no", corrected_sql)
                 return templates.TemplateResponse(
                     "feedback_response.html",
                     {

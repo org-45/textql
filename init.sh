@@ -68,4 +68,4 @@ fi
 
 # start FastAPI application
 echo "Starting FastAPI application..."
-exec uvicorn main:app --host 127.0.0.1 --port 8000
+exec uvicorn main:app --host 127.0.0.1 --port 8000 --reload

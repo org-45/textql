@@ -12,9 +12,13 @@ from src.config.settings import GEMINI_API_KEY,LLM
 
 load_dotenv()
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-def call_llm_api(prompt: str) -> str:
+async def call_llm_api(prompt: str) -> str:
     """Calls the Gemini API and returns the generated text."""
     genai.configure(api_key=GEMINI_API_KEY)
     model = genai.GenerativeModel(LLM)
@@ -34,9 +38,7 @@ def clean_llm_output(gemini_output: str) -> str:
     gemini_output = re.sub(r';\s*$', '', gemini_output)
 
     # remove any leading/trailing whitespace
-    gemini_output = gemini_output.strip()
-
-    return gemini_output
+    return gemini_output.strip()
 
 def format_llm_output_sql(sql_query: str) -> str:
     """Formats the SQL query using sqlparse."""
@@ -46,42 +48,27 @@ def format_llm_output_sql(sql_query: str) -> str:
     except Exception as e:
         logger.warning(f"Error formatting SQL: {e}")
         return sql_query
-
-def validate_llm_output_sql(sql_query: str) -> bool:
-    """Validates the SQL query to ensure it does not contain any potentially dangerous statements."""
-    dangerous_patterns = [r'\bDROP\b', r'\bDELETE\b', r'\bTRUNCATE\b', r'\bALTER\b',
-                           r'\bUPDATE\b', r'\bCREATE\b', r'\bGRANT\b', r'\bREVOKE\b']
-    for pattern in dangerous_patterns:
-        if re.search(pattern, sql_query, re.IGNORECASE):
-            logger.warning("Dangerous SQL keyword found! Preventing execution.")
-            raise ValueError("The SQL query contains a potentially dangerous statement and cannot be executed.")
-    return True
-
 # main language->SQL pipeline
-def generate_sql_from_llm(db:DatabaseManager,natural_language_input: str) -> dict:
+async def generate_sql_from_llm(db: DatabaseManager, natural_language_input: str) -> dict:
     """Generates a SQL query from natural language input using the Gemini API."""
     try:
         # 1. Load the queries and schema
-        queries = load_queries()
-        schema = load_schema_and_samples(db)
-
+        queries = await load_queries()
+        schema = await load_schema_and_samples(db)
         # 2. Get similar rows from vector table
-        similar_rows ,_ = get_similar_rows_from_vector(db,natural_language_input,2)
-
+        similar_rows, _ = await get_similar_rows_from_vector(db, natural_language_input, 2)
         # 3. Construct the prompt
-        prompt = construct_prompt(natural_language_input,similar_rows, queries, schema)
+        prompt = construct_prompt(natural_language_input, similar_rows, queries, schema)
+            
         # 4. Call the LLM API
-        gemini_output = call_llm_api(prompt)
+        gemini_output = await call_llm_api(prompt)
         logger.debug(f"Generated SQL query: {gemini_output}")
 
         # 5. Clean the output
         cleaned_output = clean_llm_output(gemini_output)
         logger.debug(f"Cleaned SQL query: {cleaned_output}")
 
-        # 6. Validate sql donot contain harmful queries like drop, delete, add, update
-        validate_llm_output_sql(cleaned_output)
-
-        # 7. Format SQL query
+        # 6. Format SQL query
         formatted_sql = format_llm_output_sql(cleaned_output)
 
         # include the original prompt in output too

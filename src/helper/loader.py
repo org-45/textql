@@ -9,7 +9,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def load_queries(filepath: str = "data/queries.json") -> list:
+async def load_queries(filepath: str = "data/queries.json") -> list:
     """Loads a limited number of example queries from a JSON file."""
     try:
         with open(filepath, 'r') as f:
@@ -19,10 +19,10 @@ def load_queries(filepath: str = "data/queries.json") -> list:
         logger.error(f"Error loading queries: {e}")
         return []
 
-def load_schema_and_samples(db: DatabaseManager) -> dict:
+async def load_schema_and_samples(db: DatabaseManager) -> dict:
     """Loads schema and sample data dynamically."""
-    schema = db.get_schema()
+    schema = await db.get_schema()
     for table in schema["tables"]:
-        samples = db.get_sample_data(table)
+        samples = await db.get_sample_data(table)
         schema["tables"][table] = {"columns": schema["tables"][table], "samples": [dict(row) for row in samples]}
     return schema
