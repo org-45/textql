@@ -4,6 +4,7 @@ TABLES_CONFIG = [
         'csv_file': 'airlines.csv',
         'primary_key': 'iata_code',
         'foreign_keys': [],
+        'partition_by': '',
         'column_mapping': {
             'iata_code': 'CHAR(8)',      
             'airline': 'VARCHAR(255)'     
@@ -14,6 +15,7 @@ TABLES_CONFIG = [
         'csv_file': 'airports.csv',
         'primary_key': 'iata_code',
         'foreign_keys': [],
+        'partition_by': '',
         'column_mapping': {
             'iata_code': 'CHAR(8)',      
             'airport': 'VARCHAR(255)',    
@@ -29,6 +31,7 @@ TABLES_CONFIG = [
         'csv_file': 'flights.csv',
         'primary_key': 'unique_id',
         'foreign_keys': [],
+        'partition_by': 'LIST (month)',
         'column_mapping': {
             'year': 'INTEGER',
             'month': 'INTEGER',

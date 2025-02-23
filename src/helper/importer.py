@@ -28,9 +28,11 @@ async def initialize_database():
             csv_path = os.path.join(DATA_DIR, config['csv_file'])
             primary_key = config['primary_key']
             foreign_keys = config.get('foreign_keys', [])
+            partition_by = config.get('partition_by', '')
+
 
             logger.info(f"Importing {csv_path} into table '{table_name}'")
-            await db.import_csv(table_name, csv_path, primary_key, foreign_keys)
+            await db.import_csv(table_name, csv_path, primary_key, foreign_keys,partition_by)
 
             if table_name in ["airlines", "airports"]:
                 logger.info(f"Generating embeddings for table '{table_name}'")

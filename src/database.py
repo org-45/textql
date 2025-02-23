@@ -81,14 +81,35 @@ class DatabaseManager:
                     if foreign_keys:
                         fk_constraints = [f"FOREIGN KEY (\"{fk['column'].lower()}\") REFERENCES {fk['references']}" for fk in foreign_keys]
                         sql += ", " + ", ".join(fk_constraints)
-                    sql += ");"
+                    if partition_by:
+                        sql += f") PARTITION BY {partition_by}"
+                    else:
+                        sql += ")"
+                    sql += ";"
                     await conn.execute(sql)
                     logger.info(f"Created table '{table_name}' with primary key '{primary_key}' and partition '{partition_by}'")
         except Exception as e:
             logger.error(f"Error creating table '{table_name}': {str(e)}")
             raise
 
-    async def import_csv(self, table_name: str, csv_file: str, primary_key: str = None, foreign_keys: list = None):
+    async def create_monthly_partitions(self, table_name: str):
+        """Create monthly partitions for the flights table."""
+        try:
+            async with self._conn.acquire() as conn:
+                async with conn.transaction():
+                    for month in range(1, 13):
+                        partition_name = f"{table_name}_2015_{month}"
+                        await conn.execute(f"""
+                            CREATE TABLE IF NOT EXISTS {partition_name} 
+                            PARTITION OF {table_name} 
+                            FOR VALUES IN ({month});
+                        """)
+                    logger.info(f"Created monthly partitions for table '{table_name}'")
+        except Exception as e:
+            logger.error(f"Error creating partitions for table '{table_name}': {str(e)}")
+            raise
+
+    async def import_csv(self, table_name: str, csv_file: str, primary_key: str = None, foreign_keys: list = None, partition_by:str = None):
         """Import CSV data into a table with rollback on failure, using temp table and partitioning for flights."""
         try:
             async with self._conn.acquire() as conn:
@@ -114,12 +135,42 @@ class DatabaseManager:
                                 delimiter=','
                             )
                             await conn.execute(f"DROP TABLE IF EXISTS {table_name};")
-                            sql = f"CREATE TABLE {table_name} (unique_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), {column_defs}"
+
+                            #composite PRIMARY_KEY
+                            if table_name == 'flights' and partition_by and "LIST (month)" in partition_by:
+                                sql = f"CREATE TABLE {table_name} (unique_id UUID DEFAULT uuid_generate_v4(), {column_defs}, PRIMARY KEY (unique_id, month)"
+                            else:
+                                sql = f"CREATE TABLE {table_name} (unique_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), {column_defs}"
+                            
                             if foreign_keys:
                                 fk_constraints = [f"FOREIGN KEY (\"{fk['column'].lower()}\") REFERENCES {fk['references']}" for fk in foreign_keys]
                                 sql += ", " + ", ".join(fk_constraints)
-                            sql += ");"
+                            if partition_by:
+                                sql += f") PARTITION BY {partition_by}"
+                            else:
+                                sql += ")"
+                            sql += ";"
                             await conn.execute(sql)
+                            
+                            if table_name == 'flights' and partition_by and "LIST (month)" in partition_by:
+                                # create partitions for months 1-12
+                                for month in range(1, 13):
+                                    partition_name = f"{table_name}_{month}"
+                                    partition_sql = f"""
+                                        CREATE TABLE IF NOT EXISTS {partition_name} 
+                                        PARTITION OF {table_name}
+                                        FOR VALUES IN ({month});
+                                    """
+                                    await conn.execute(partition_sql)
+                                    
+                                    # create indexes for each partition
+                                    await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{partition_name}_origin ON {partition_name} (origin_airport);")
+                                    await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{partition_name}_destination ON {partition_name} (destination_airport);")
+                                    await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{partition_name}_airline ON {partition_name} (airline);")
+                                    await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{partition_name}_departure_delay ON {partition_name} (departure_delay);")
+                                    await conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{partition_name}_arrival_delay ON {partition_name} (arrival_delay);")
+                            
+                            # insert data from temp table to partitioned table
                             insert_sql = f"INSERT INTO {table_name} ({', '.join(quoted_column_names)}) SELECT {', '.join(quoted_column_names)} FROM {temp_table};"
                             await conn.execute(insert_sql)
                             await conn.execute(f"DROP TABLE {temp_table};")
