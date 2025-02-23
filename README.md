@@ -1,4 +1,4 @@
-##TextQL
+## TextQL
 
 Natural language to SQL query translation pipeline with frontend.
 

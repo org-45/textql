@@ -302,7 +302,9 @@ class DatabaseManager:
                         SELECT table_name 
                         FROM information_schema.tables 
                         WHERE table_schema = 'public'
-                        AND table_name NOT IN ('feedback', 'text_embeddings');
+                        AND table_name NOT IN ('feedback', 'text_embeddings')
+                        AND table_name NOT LIKE 'flights_%'
+                        OR table_name = 'flights';             
                     """)
                     schema = {"tables": {}}
                     for table in tables:
@@ -315,15 +317,4 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error fetching schema: {str(e)}")
             raise
-
-    async def get_sample_data(self, table_name: str, limit: int = 5) -> List[dict]:
-        """Fetch sample data from a table."""
-        try:
-            async with self._conn.acquire() as conn:
-                async with conn.transaction():
-                    results = await conn.fetch(f"SELECT * FROM {table_name} LIMIT $1;", limit)
-                    column_names = list(results[0].keys()) if results else []
-                    return [dict(row) for row in results]
-        except Exception as e:
-            logger.error(f"Error fetching sample data from '{table_name}': {str(e)}")
-            raise
+    

@@ -23,6 +23,5 @@ async def load_schema_and_samples(db: DatabaseManager) -> dict:
     """Loads schema and sample data dynamically."""
     schema = await db.get_schema()
     for table in schema["tables"]:
-        samples = await db.get_sample_data(table)
-        schema["tables"][table] = {"columns": schema["tables"][table], "samples": [dict(row) for row in samples]}
+        schema["tables"][table] = {"columns": schema["tables"][table]}
     return schema
