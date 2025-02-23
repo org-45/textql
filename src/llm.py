@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from src.helper.loader import load_queries, load_schema_and_samples
 from src.helper.prompter import construct_prompt
 from src.vector import get_similar_rows_from_vector
-from src.config.settings import GEMINI_API_KEY,LLM
+from src.config.settings import GEMINI_API_KEY,LLM,VECTOR_ROWS_IN_PROMPT
 
 load_dotenv()
 
@@ -58,7 +58,7 @@ async def generate_sql_from_llm(db: DatabaseManager, natural_language_input: str
         schema = await load_schema_and_samples(db)
 
         # 2. Get similar rows from vector table
-        similar_rows, _ = await get_similar_rows_from_vector(db, natural_language_input, 2)
+        similar_rows, _ = await get_similar_rows_from_vector(db, natural_language_input, VECTOR_ROWS_IN_PROMPT)
 
         # 3. Construct the prompt
         prompt = construct_prompt(natural_language_input, similar_rows, queries, schema)

@@ -33,6 +33,7 @@ POSTGRES_PORT: int = int(os.getenv("POSTGRES_PORT", config.get("postgres_port", 
 SENTENCE_TRANSFORMER_MODEL: str = os.getenv("SENTENCE_TRANSFORMER_MODEL", config.get("sentence_transformer_model", "all-MiniLM-L6-v2"))
 LLM: str = os.getenv("LLM", config.get("llm", "gemini-2.0-flash-001"))
 SQL_EXECUTION_TIMEOUT: int = config.get("sql_execution_timeout", 10)
+VECTOR_ROWS_IN_PROMPT:int = config.get("vector_rows_in_prompt",2)
 
 # Secrets from .env only
 POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")

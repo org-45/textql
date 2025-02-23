@@ -5,7 +5,7 @@ import csv
 import asyncio
 from src.config.tables import COLUMN_TYPE_MAPPING
 from fastapi import HTTPException
-from src.config.settings import SQL_EXECUTION_TIMEOUT
+from src.config.settings import SQL_EXECUTION_TIMEOUT, VECTOR_ROWS_IN_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +163,7 @@ class DatabaseManager:
             logger.error(f"Error inserting embeddings into '{table_name}': {str(e)}")
             raise
 
-    async def get_similar_rows(self, query_embedding: str, num_of_rows: int = 5) -> List[Any]:
+    async def get_similar_rows(self, query_embedding: str, num_of_rows: int) -> List[Any]:
         """Retrieve similar rows based on vector embedding similarity."""
         sql = f"""
         SELECT table_name, row_data, embedding <#> CAST($1 AS vector) AS similarity

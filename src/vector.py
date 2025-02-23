@@ -1,11 +1,11 @@
 import logging
 from src.database import DatabaseManager
 from sentence_transformers import SentenceTransformer
-from src.config.settings import SENTENCE_TRANSFORMER_MODEL
+from src.config.settings import SENTENCE_TRANSFORMER_MODEL,VECTOR_ROWS_IN_PROMPT
 
 logger = logging.getLogger(__name__)
 
-async def get_similar_rows_from_vector(db: DatabaseManager, user_query: str, num_of_rows: int = 2) -> tuple:
+async def get_similar_rows_from_vector(db: DatabaseManager, user_query: str, num_of_rows: int = VECTOR_ROWS_IN_PROMPT) -> tuple:
     """Fetch similar rows using vector embeddings synchronously."""
     try:
         embed_model = SentenceTransformer(SENTENCE_TRANSFORMER_MODEL)
