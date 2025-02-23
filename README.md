@@ -174,3 +174,4 @@ sequenceDiagram
     DB-->>R3: Feedback stored
     R3-->>A: Render feedback response
     A-->>U: Display feedback confirmation
+```
