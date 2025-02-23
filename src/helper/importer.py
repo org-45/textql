@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer
 import json
 import csv
 from src.database import DatabaseManager
-from src.config.settings import POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST, POSTGRES_PORT
+from src.config.settings import *
 from src.config.tables import TABLES_CONFIG
 
 logging.basicConfig(
@@ -28,7 +28,7 @@ async def initialize_database():
         await db.create_embedding_table("text_embeddings")
 
         # process CSV files using TABLES_CONFIG
-        embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+        embed_model = SentenceTransformer(SENTENCE_TRANSFORMER_MODEL)
         for config in TABLES_CONFIG:
             table_name = config['table_name']
             csv_path = os.path.join(DATA_DIR, config['csv_file'])

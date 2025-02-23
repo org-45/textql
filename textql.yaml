@@ -1,0 +1,10 @@
+# textql.yaml
+app_name: "TextQL"
+allowed_hosts: ["*"]
+allowed_origins: ["*"]
+api_prefix: "/api/v1"
+postgres_host: "localhost"
+postgres_port: 5432
+sentence_transformer_model: "all-MiniLM-L6-v2"
+llm: "gemini-2.0-flash-001"
+sql_execution_timeout: 10

@@ -7,7 +7,7 @@ from src.database import DatabaseManager
 from dotenv import load_dotenv
 from src.helper.loader import load_queries, load_schema_and_samples
 from src.helper.prompter import construct_prompt
-from src.vector_comparision import get_similar_rows_from_vector
+from src.vector import get_similar_rows_from_vector
 from src.config.settings import GEMINI_API_KEY,LLM
 
 load_dotenv()
@@ -48,6 +48,7 @@ def format_llm_output_sql(sql_query: str) -> str:
     except Exception as e:
         logger.warning(f"Error formatting SQL: {e}")
         return sql_query
+    
 # main language->SQL pipeline
 async def generate_sql_from_llm(db: DatabaseManager, natural_language_input: str) -> dict:
     """Generates a SQL query from natural language input using the Gemini API."""
@@ -55,8 +56,10 @@ async def generate_sql_from_llm(db: DatabaseManager, natural_language_input: str
         # 1. Load the queries and schema
         queries = await load_queries()
         schema = await load_schema_and_samples(db)
+
         # 2. Get similar rows from vector table
         similar_rows, _ = await get_similar_rows_from_vector(db, natural_language_input, 2)
+
         # 3. Construct the prompt
         prompt = construct_prompt(natural_language_input, similar_rows, queries, schema)
             

@@ -5,6 +5,7 @@ import csv
 import asyncio
 from src.config.tables import COLUMN_TYPE_MAPPING
 from fastapi import HTTPException
+from src.config.settings import SQL_EXECUTION_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class DatabaseManager:
         try:
             async with self._conn.acquire() as conn:
                 async with conn.transaction():
-                    results = await asyncio.wait_for(conn.fetch(query), timeout=10.0)
+                    results = await asyncio.wait_for(conn.fetch(query), timeout=SQL_EXECUTION_TIMEOUT)
                     if results:
                         column_names = list(results[0].keys())
                         return column_names, [list(row.values()) for row in results]
