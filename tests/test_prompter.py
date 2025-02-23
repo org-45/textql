@@ -20,7 +20,6 @@ class TestConstructPrompt(unittest.TestCase):
             "tables": {
                 "users": {
                     "columns": ["id", "name", "email", "status"],
-                    "samples": [{"id": "1", "name": "John Doe", "email": "john@example.com", "status": "active"}]
                 }
             }
         }
@@ -29,8 +28,8 @@ class TestConstructPrompt(unittest.TestCase):
     Act as a data analyst and SQL expert. Translate this natural language input into a SQL query for a Postgres DB:
     "{natural_language_input}"
 
-    Schema and sample data:
-    Table: users,Columns: id, name, email, status,Sample Data: id: 1, name: John Doe, email: john@example.com, status: active
+    Schema:
+    Table: users,Columns: id, name, email, status
     
     Reference examples:
     - Fetch active users: SELECT * FROM users WHERE status = 'active'
