@@ -1,5 +1,6 @@
 services:
   postgres:
+    container_name: textql_db
     image: ankane/pgvector:latest
     ports:
       - "5432:5432"

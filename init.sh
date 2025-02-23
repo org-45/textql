@@ -13,7 +13,7 @@ fi
 export $(grep -v '^#' .env | xargs)
 
 # get container ID
-CONTAINER_ID=$(docker ps -q --filter "name=text-sql-postgres-1")
+CONTAINER_ID=$(docker ps -q --filter "name=textql_db")
 if [ -z "$CONTAINER_ID" ]; then
   echo "PostgreSQL container not found! Please start with docker-compose up --build -d"
   exit 1

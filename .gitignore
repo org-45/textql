@@ -16,6 +16,4 @@ venv/
 *.swp
 *~
 .env
-
-*.csv
 *.db
