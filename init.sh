@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 # check for required commands
 command -v docker >/dev/null 2>&1 || { echo "Error: docker is not installed."; exit 1; }
