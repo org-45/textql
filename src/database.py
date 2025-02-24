@@ -243,7 +243,7 @@ class DatabaseManager:
     async def get_similar_rows(self, query_embedding: str, num_of_rows: int) -> List[Any]:
         """Retrieve similar rows based on vector embedding similarity."""
         sql = f"""
-        SELECT table_name, row_data, embedding <#> CAST($1 AS vector) AS similarity
+        SELECT table_name, row_data, embedding <=> CAST($1 AS vector) AS similarity
         FROM text_embeddings
         ORDER BY similarity ASC
         LIMIT $2
