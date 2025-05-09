@@ -12,6 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.responses import PlainTextResponse
 from src.database import DatabaseManager
 from src.llm import generate_sql_from_llm
+import sqlparse
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +28,12 @@ def postprocess_llm_pipeline_data(response: object) -> str:
 
 def validate_sql_before_execute(sql_query: str) -> bool:
     """Validates the SQL query to ensure it does not contain any potentially dangerous statements."""
-    dangerous_patterns = [r'\bDROP\b', r'\bDELETE\b', r'\bTRUNCATE\b', r'\bALTER\b',
-                           r'\bUPDATE\b', r'\bCREATE\b', r'\bGRANT\b', r'\bREVOKE\b']
-    for pattern in dangerous_patterns:
-        if re.search(pattern, sql_query, re.IGNORECASE):
-            logger.warning("Dangerous SQL keyword found! Preventing execution.")
-            raise ValueError("The SQL query contains a potentially dangerous statement and cannot be executed.")
+    parsed = sqlparse.parse(sql_query)
+    for statement in parsed:
+        for token in statement.tokens:
+            if token.ttype is sqlparse.tokens.Keyword and token.value.upper() in {"DROP", "DELETE", "TRUNCATE", "ALTER", "UPDATE", "CREATE", "GRANT", "REVOKE"}:
+                logger.warning("Dangerous SQL keyword found! Preventing execution.")
+                raise ValueError("The SQL query contains a potentially dangerous statement and cannot be executed.")
     return True
 
 def sanitize_query(input_text: str) -> str:
@@ -99,26 +100,38 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
 
     @app.post("/execute-sql", response_class=HTMLResponse)
     @limiter.limit("1/15seconds")
-    async def execute_sql_endpoint(request: Request, query_token: str = Form(...), db: DatabaseManager = Depends(get_db)):
+    async def execute_sql_endpoint(
+        request: Request, 
+        query_token: str = Form(...), 
+        page: int = Form(default=1), 
+        page_size: int = Form(default=10), 
+        db: DatabaseManager = Depends(get_db)
+    ):
         try:
             query_data = app.state.sql_store.get(query_token)
             if not query_data:
                 raise HTTPException(status_code=400, detail="Invalid or expired query token.")
             
             sql_query = query_data["sql"]
-            
             validate_sql_before_execute(sql_query)
 
-            column_names, results = await db.execute_query(sql_query)
+            offset = (page - 1) * page_size
+            paginated_query = f"{sql_query} LIMIT {page_size} OFFSET {offset}"
+            column_names, results = await db.execute_query(paginated_query)
             logger.info("SQL query executed successfully for token %s", query_token)
-
-            del app.state.sql_store[query_token]
 
             return templates.TemplateResponse(
                 "text-to-sql.html",
-                {"request": request, "sql_query": sql_query, "query_token": None, "column_names": column_names, "results": results}
+                {
+                    "request": request, 
+                    "sql_query": sql_query, 
+                    "query_token": query_token, 
+                    "column_names": column_names, 
+                    "results": results, 
+                    "page": page, 
+                    "page_size": page_size
+                }
             )
-        
         except HTTPException as e:
             raise e
         except Exception as e:

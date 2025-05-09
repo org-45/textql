@@ -1,4 +1,5 @@
 import logging
+import traceback
 from src.database import DatabaseManager
 from sentence_transformers import SentenceTransformer
 from src.config.settings import SENTENCE_TRANSFORMER_MODEL,VECTOR_ROWS_IN_PROMPT
@@ -19,4 +20,5 @@ async def get_similar_rows_from_vector(db: DatabaseManager, user_query: str, num
         return formatted_rows, user_query
     except Exception as e:
         logger.error(f"Error in vector search: {e}")
+        logger.debug(traceback.format_exc())
         return "", user_query
