@@ -12,6 +12,9 @@ from slowapi.errors import RateLimitExceeded
 from starlette.responses import PlainTextResponse
 from src.database import DatabaseManager
 from src.llm import generate_sql_from_llm
+import sqlparse
+from sqlparse.sql import Statement
+from sqlparse.tokens import DML
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +29,22 @@ def postprocess_llm_pipeline_data(response: object) -> str:
     return response["data"].replace('\n', ' ').strip()
 
 def validate_sql_before_execute(sql_query: str) -> bool:
-    """Validates the SQL query to ensure it does not contain any potentially dangerous statements."""
-    dangerous_patterns = [r'\bDROP\b', r'\bDELETE\b', r'\bTRUNCATE\b', r'\bALTER\b',
-                           r'\bUPDATE\b', r'\bCREATE\b', r'\bGRANT\b', r'\bREVOKE\b']
-    for pattern in dangerous_patterns:
-        if re.search(pattern, sql_query, re.IGNORECASE):
-            logger.warning("Dangerous SQL keyword found! Preventing execution.")
-            raise ValueError("The SQL query contains a potentially dangerous statement and cannot be executed.")
-    return True
+    """Validates the SQL query to ensure it only contains SELECT statements."""
+    try:
+        parsed_statements = sqlparse.parse(sql_query)
+        if not parsed_statements:
+            raise ValueError("The SQL query is empty or invalid.")
+
+        for statement in parsed_statements:
+            if not isinstance(statement, Statement):
+                raise ValueError("The SQL query contains invalid syntax.")
+            if statement.get_type() != "SELECT":
+                raise ValueError("Only SELECT statements are allowed.")
+
+        return True
+    except Exception as e:
+        logger.warning(f"SQL validation failed: {e}")
+        raise ValueError("The SQL query is invalid or contains disallowed statements.")
 
 def sanitize_query(input_text: str) -> str:
     """Sanitize user query: allow only alphabet and numbers, limit to 50 words."""
