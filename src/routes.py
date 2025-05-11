@@ -12,6 +12,9 @@ from slowapi.errors import RateLimitExceeded
 from starlette.responses import PlainTextResponse
 from src.database import DatabaseManager
 from src.llm import generate_sql_from_llm
+import sqlparse
+from sqlparse.sql import Identifier, IdentifierList
+from sqlparse.tokens import Keyword
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +30,19 @@ def postprocess_llm_pipeline_data(response: object) -> str:
 
 def validate_sql_before_execute(sql_query: str) -> bool:
     """Validates the SQL query to ensure it does not contain any potentially dangerous statements."""
-    dangerous_patterns = [r'\bDROP\b', r'\bDELETE\b', r'\bTRUNCATE\b', r'\bALTER\b',
-                           r'\bUPDATE\b', r'\bCREATE\b', r'\bGRANT\b', r'\bREVOKE\b']
-    for pattern in dangerous_patterns:
-        if re.search(pattern, sql_query, re.IGNORECASE):
-            logger.warning("Dangerous SQL keyword found! Preventing execution.")
-            raise ValueError("The SQL query contains a potentially dangerous statement and cannot be executed.")
+    dangerous_keywords = {"DROP", "DELETE", "TRUNCATE", "ALTER", "UPDATE", "CREATE", "GRANT", "REVOKE"}
+    
+    try:
+        parsed = sqlparse.parse(sql_query)
+        for statement in parsed:
+            for token in statement.tokens:
+                if token.ttype == Keyword and token.value.upper() in dangerous_keywords:
+                    logger.warning(f"Dangerous SQL keyword '{token.value}' found! Preventing execution.")
+                    raise ValueError(f"The SQL query contains a potentially dangerous statement: '{token.value}'")
+    except Exception as e:
+        logger.error(f"Error during SQL validation: {e}")
+        raise ValueError("Invalid SQL query.")
+    
     return True
 
 def sanitize_query(input_text: str) -> str:
