@@ -51,12 +51,14 @@ class DatabaseManager:
             logger.error(f"Error closing database connection: {str(e)}")
             raise
 
-    async def execute_query(self, query: str) -> Tuple[List[str], List[List[Any]]]:
-        """Execute a SQL query and return column names and results with a timeout."""
+    async def execute_query(self, query: str, offset: int = 0, limit: int = 100) -> Tuple[List[str], List[List[Any]]]:
+        """Execute a SQL query with pagination and return column names and results."""
         try:
+            # Add LIMIT and OFFSET for pagination
+            paginated_query = f"{query} LIMIT {limit} OFFSET {offset}"
             async with self._conn.acquire() as conn:
                 async with conn.transaction():
-                    results = await asyncio.wait_for(conn.fetch(query), timeout=SQL_EXECUTION_TIMEOUT)
+                    results = await asyncio.wait_for(conn.fetch(paginated_query), timeout=SQL_EXECUTION_TIMEOUT)
                     if results:
                         column_names = list(results[0].keys())
                         return column_names, [list(row.values()) for row in results]
@@ -317,4 +319,3 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error fetching schema: {str(e)}")
             raise
-    
