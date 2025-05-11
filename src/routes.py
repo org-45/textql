@@ -1,6 +1,7 @@
 import re
 import logging
 import uuid
+from math import ceil
 from fastapi import FastAPI, Request, Form, HTTPException, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -109,7 +110,13 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
 
     @app.post("/execute-sql", response_class=HTMLResponse)
     @limiter.limit("1/15seconds")
-    async def execute_sql_endpoint(request: Request, query_token: str = Form(...), db: DatabaseManager = Depends(get_db)):
+    async def execute_sql_endpoint(
+        request: Request,
+        query_token: str = Form(...),
+        page: int = Form(default=1),
+        page_size: int = Form(default=10),
+        db: DatabaseManager = Depends(get_db)
+    ):
         try:
             query_data = app.state.sql_store.get(query_token)
             if not query_data:
@@ -122,11 +129,31 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
             column_names, results = await db.execute_query(sql_query)
             logger.info("SQL query executed successfully for token %s", query_token)
 
+            # Pagination logic
+            total_results = len(results)
+            total_pages = ceil(total_results / page_size)
+            if page < 1 or page > total_pages:
+                raise HTTPException(status_code=400, detail="Invalid page number.")
+
+            start_index = (page - 1) * page_size
+            end_index = start_index + page_size
+            paginated_results = results[start_index:end_index]
+
             del app.state.sql_store[query_token]
 
             return templates.TemplateResponse(
                 "text-to-sql.html",
-                {"request": request, "sql_query": sql_query, "query_token": None, "column_names": column_names, "results": results}
+                {
+                    "request": request,
+                    "sql_query": sql_query,
+                    "query_token": None,
+                    "column_names": column_names,
+                    "results": paginated_results,
+                    "page": page,
+                    "page_size": page_size,
+                    "total_pages": total_pages,
+                    "total_results": total_results
+                }
             )
         
         except HTTPException as e:
