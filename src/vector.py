@@ -17,6 +17,9 @@ async def get_similar_rows_from_vector(db: DatabaseManager, user_query: str, num
         
         formatted_rows = "".join([f"Table: {row[0]}, Data: {row[1]}\n" for row in results])
         return formatted_rows, user_query
+    except ValueError as ve:
+        logger.error(f"Value error in vector search: {ve}")
+        return "", user_query
     except Exception as e:
-        logger.error(f"Error in vector search: {e}")
+        logger.error(f"Unexpected error in vector search: {e}")
         return "", user_query
