@@ -1,7 +1,7 @@
 import re
 import logging
 import uuid
-from fastapi import FastAPI, Request, Form, HTTPException, Depends
+from fastapi import FastAPI, Request, Form, HTTPException, Depends, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from typing import List, Any
@@ -182,4 +182,26 @@ def setup_routes(app: FastAPI, templates: Jinja2Templates, api_prefix: str):
                     "message": f"Error submitting feedback: {str(e)}",
                     "type": "error"
                 }
+            )
+
+    @app.post("/get-similar-rows", response_class=HTMLResponse)
+    async def get_similar_rows_endpoint(
+        request: Request,
+        user_query: str = Form(...),
+        page: int = Query(1, ge=1),
+        page_size: int = Query(10, ge=1, le=100),
+        db: DatabaseManager = Depends(get_db)
+    ):
+        """Endpoint to fetch similar rows with pagination."""
+        try:
+            formatted_rows, _ = await get_similar_rows_from_vector(db, user_query, VECTOR_ROWS_IN_PROMPT, page, page_size)
+            return templates.TemplateResponse(
+                "text-to-sql.html",
+                {"request": request, "similar_rows": formatted_rows, "page": page, "page_size": page_size}
+            )
+        except Exception as e:
+            logger.error(f"Error in get_similar_rows_endpoint: {e}")
+            return templates.TemplateResponse(
+                "text-to-sql.html",
+                {"request": request, "message": f"Error fetching similar rows: {e}", "type": "error"}
             )

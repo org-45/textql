@@ -240,18 +240,18 @@ class DatabaseManager:
             logger.error(f"Error inserting embeddings into '{table_name}': {str(e)}")
             raise
 
-    async def get_similar_rows(self, query_embedding: str, num_of_rows: int) -> List[Any]:
-        """Retrieve similar rows based on vector embedding similarity."""
+    async def get_similar_rows(self, query_embedding: str, num_of_rows: int, offset: int = 0) -> List[Any]:
+        """Retrieve similar rows based on vector embedding similarity with pagination."""
         sql = f"""
         SELECT table_name, row_data, embedding <=> CAST($1 AS vector) AS similarity
         FROM text_embeddings
         ORDER BY similarity ASC
-        LIMIT $2
+        LIMIT $2 OFFSET $3
         """
         try:
             async with self._conn.acquire() as conn:
                 async with conn.transaction():
-                    results = await conn.fetch(sql, query_embedding, num_of_rows)
+                    results = await conn.fetch(sql, query_embedding, num_of_rows, offset)
                     return results
         except Exception as e:
             logger.error(f"Error retrieving similar rows: {str(e)}")
@@ -317,4 +317,3 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error fetching schema: {str(e)}")
             raise
-    
