@@ -1,93 +1,90 @@
 {% if message %}
-    <div class="message {% if type == 'error' %}error{% else %}success{% endif %}">
-        {{ message }}
-    </div>
+<div class="message {% if type == 'error' %}error{% else %}success{% endif %}">
+    {{ message }}
+</div>
 {% endif %}
 
 {% if sql_query %}
-    <div class="query-section">
-        <h3>Generated SQL Query</h3>
-        <div class="query-box">{{ sql_query }}</div>
-        
-        {% if query_token %}
-            <div class="actions-container">
-                <div class="action-group">
-                    <form class="action-form">
-                        <input type="hidden" name="query_token" value="{{ query_token }}">
-                        <button 
-                            hx-post="/execute-sql"
-                            hx-trigger="click"
-                            hx-target="#query-result"
-                            hx-include="[name='query_token']"
-                            type="button"
-                            class="primary-button"
-                        >
-                            <span>Execute Query</span>
-                            <span class="spinner htmx-indicator"></span>
-                        </button>
-                    </form>
-                </div>
+<div class="query-section">
+    <h3>Generated SQL Query</h3>
+    <div class="query-box">{{ sql_query }}</div>
 
-                <div class="feedback-group" id="feedback-group">
-                    <span class="feedback-label">Was this query correct?</span>
-                    <div class="feedback-buttons">
-                        <button 
-                            hx-post="/submit-feedback"
-                            hx-target="#feedback-result"
-                            hx-include="[name='query_token']"
-                            hx-vals='{"feedback": "yes"}'
-                            class="feedback-button yes"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            Yes
-                        </button>
-                        <button 
-                            hx-post="/submit-feedback"
-                            hx-target="#feedback-result"
-                            hx-include="[name='query_token']"
-                            hx-vals='{"feedback": "no"}'
-                            class="feedback-button no"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                            No
-                        </button>
-                    </div>
-                </div>
+    {% if query_token %}
+    <div class="actions-container">
+        <div class="action-group">
+            <form class="action-form">
+                <input type="hidden" name="query_token" value="{{ query_token }}">
+                <button hx-post="/execute-sql" hx-trigger="click" hx-target="#query-result"
+                    hx-include="[name='query_token']" type="button" class="primary-button">
+                    <span>Execute Query</span>
+                    <span class="spinner htmx-indicator"></span>
+                </button>
+            </form>
+        </div>
+
+        <div class="feedback-group" id="feedback-group">
+            <span class="feedback-label">Was this query correct?</span>
+            <div class="feedback-buttons">
+                <button hx-post="/submit-feedback" hx-target="#feedback-result" hx-include="[name='query_token']"
+                    hx-vals='{"feedback": "yes"}' class="feedback-button yes">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Yes
+                </button>
+                <button hx-post="/submit-feedback" hx-target="#feedback-result" hx-include="[name='query_token']"
+                    hx-vals='{"feedback": "no"}' class="feedback-button no">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    No
+                </button>
             </div>
-
-            <div id="feedback-result"></div>
-        {% endif %}
+        </div>
     </div>
+
+    <div id="feedback-result"></div>
+    {% endif %}
+</div>
 {% endif %}
 
 {% if column_names and results %}
-    <div class="results-section">
-        <h3>Query Results</h3>
-        <div class="table-container">
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        {% for column in column_names %}
-                            <th data-column="{{ column }}">{{ column }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in results %}
-                        <tr>
-                            {% for value in row %}
-                                <td title="{{ value }}">{{ value }}</td>
-                            {% endfor %}
-                        </tr>
+<div class="results-section">
+    <h3>Query Results</h3>
+    <div class="table-container">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    {% for column in column_names %}
+                    <th data-column="{{ column }}">{{ column }}</th>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                <tr>
+                    {% for value in row %}
+                    <td title="{{ value }}">{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+</div>
 {% endif %}
 
+{% if similar_rows %}
+<div class="results-section">
+    <h3>Similar Rows</h3>
+    <pre>{{ similar_rows }}</pre>
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="?page={{ page - 1 }}&page_size={{ page_size }}" class="pagination-button">Previous</a>
+        {% endif %}
+        <span>Page {{ page }}</span>
+        <a href="?page={{ page + 1 }}&page_size={{ page_size }}" class="pagination-button">Next</a>
+    </div>
+</div>
+{% endif %}
